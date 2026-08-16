@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Showcase — Apollo Films</title>
+<meta name="description" content="The complete Apollo Films archive, filtered by category — brand works, short films and trailers.">
+<link rel="preconnect" href="https://images.squarespace-cdn.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400&display=swap">
+<link rel="stylesheet" href="assets/css/apollo.css">
+</head>
+<body>
+
+<a class="sr-only" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <a class="masthead__brand" href="index.html">Apollo Films</a>
+  <button class="masthead__toggle" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+  <nav class="masthead__nav" id="nav">
+    <a href="showcase.html" aria-current="page">Showcase</a>
+    <a href="production.html">Production</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+</header>
+
+<main id="main">
+
+  <section class="band band--dark">
+    <div class="stack stack--lg">
+      <h1 class="display">This is where our work lives.</h1>
+      <p class="lede dim">Each piece reflects a different angle of what we do — narrative, image, rhythm,
+        tone. We focus on projects that carry weight, both visually and emotionally.</p>
+    </div>
+  </section>
+
+  <section class="band band--dark catalogue__filters">
+    <div class="filters" role="group" aria-label="Filter films by category">
+      <button type="button" data-filter="All" aria-pressed="true">All</button>
+      <button type="button" data-filter="Trailers" aria-pressed="false">Trailers</button>
+      <button type="button" data-filter="Brand Works" aria-pressed="false">Brand Works</button>
+      <button type="button" data-filter="Short Films" aria-pressed="false">Short Films</button>
+      <span class="label filters__count" id="filter-count"></span>
+    </div>
+  </section>
+
+  <section class="catalogue">
+    <div class="catalogue__stage" id="catalogue-stage" aria-hidden="true"></div>
+    <ol class="catalogue__list" id="catalogue-list"></ol>
+  </section>
+
+  <section class="band band--cream">
+    <div class="stack stack--lg">
+      <h2 class="display">Bring us the brief.</h2>
+      <a class="btn" href="contact.html">Contact the studio</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="sitefooter">
+  <a class="sitefooter__mark" href="index.html">Apollo Films</a>
+  <div class="sitefooter__bar">
+    <a class="label" href="mailto:info@apollofilms.co">info@apollofilms.co</a>
+    <nav class="sitefooter__nav" aria-label="Footer">
+      <a href="showcase.html">Showcase</a>
+      <a href="production.html">Production</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <span class="label">Istanbul, Turkey</span>
+    <span class="label">© <span data-year>2026</span> Apollo Films</span>
+  </div>
+</footer>
+
+<script src="assets/js/films.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

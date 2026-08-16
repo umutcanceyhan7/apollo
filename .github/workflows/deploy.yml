@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages
+
+# Apollo is plain static HTML — there is no build step. The job stages just the
+# files that make up the site into _site/ and publishes that, so the README, the
+# dev server and the credit source data stay in the repo but off the web.
+#
+# The site is served from a subpath of the custom domain:
+# https://umutcanceyhan.com/apollo/ — every path in the markup is relative, so
+# nothing needs a base rewrite.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; cancel in-progress runs of the same ref.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stage site
+        run: |
+          mkdir -p _site
+          cp *.html _site/
+          cp -R assets _site/
+          echo "--- staged ---"
+          du -sh _site
+          find _site -maxdepth 2 -type d
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

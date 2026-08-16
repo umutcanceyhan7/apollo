@@ -1,0 +1,11 @@
+# The full cuts. 780 MB of masters, and two of them (Mirage at 121 MB, Amore
+# Serpente at 120 MB) are over GitHub's hard 100 MB per-file ceiling, so a push
+# carrying them is rejected outright. They belong on a media host — point FULL
+# in assets/js/films.js at it.
+#
+# This does not match assets/films/loops/, which is the 38 MB set of 12s hover
+# reels the site actually needs in the repo.
+/assets/films/*.mp4
+
+.DS_Store
+node_modules/

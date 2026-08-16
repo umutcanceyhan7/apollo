@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Film — Apollo Films</title>
+<link rel="preconnect" href="https://images.squarespace-cdn.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400&display=swap">
+<link rel="stylesheet" href="assets/css/apollo.css">
+</head>
+<body>
+
+<a class="sr-only" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <a class="masthead__brand" href="index.html">Apollo Films</a>
+  <button class="masthead__toggle" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+  <nav class="masthead__nav" id="nav">
+    <a href="showcase.html" aria-current="page">Showcase</a>
+    <a href="production.html">Production</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+</header>
+
+<main id="main">
+  <div id="film">
+
+    <section class="band band--dark band--flush" style="padding-top:0;padding-bottom:0;">
+      <video class="player" data-player controls playsinline preload="metadata"></video>
+    </section>
+
+    <section class="band band--dark">
+      <div class="stack stack--xl">
+
+        <div class="stack stack--sm">
+          <span class="label dim" data-cat></span>
+          <h1 class="display" data-title></h1>
+          <span class="fine dim" data-client></span>
+        </div>
+
+        <div class="columns" data-cast-block hidden>
+          <p class="label dim">Cast</p>
+          <ol class="credits" data-cast></ol>
+        </div>
+
+        <div class="columns">
+          <p class="label dim">Crew</p>
+          <ol class="credits" data-credits></ol>
+        </div>
+
+        <div class="columns" data-also-block hidden>
+          <p class="label dim">Also credited</p>
+          <p class="namelist" data-also></p>
+        </div>
+
+        <div class="filmnav">
+          <a data-prev href="#">
+            <span class="label dim">Previous</span>
+            <span class="t"></span>
+          </a>
+          <a data-next href="#">
+            <span class="label dim">Next</span>
+            <span class="t"></span>
+          </a>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <section class="band band--cream">
+    <div class="stack stack--lg">
+      <h2 class="display">More work.</h2>
+      <a class="btn" href="showcase.html">Back to showcase</a>
+    </div>
+  </section>
+</main>
+
+<footer class="sitefooter">
+  <a class="sitefooter__mark" href="index.html">Apollo Films</a>
+  <div class="sitefooter__bar">
+    <a class="label" href="mailto:info@apollofilms.co">info@apollofilms.co</a>
+    <nav class="sitefooter__nav" aria-label="Footer">
+      <a href="showcase.html">Showcase</a>
+      <a href="production.html">Production</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <span class="label">Istanbul, Turkey</span>
+    <span class="label">© <span data-year>2026</span> Apollo Films</span>
+  </div>
+</footer>
+
+<script src="assets/js/films.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
