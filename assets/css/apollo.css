@@ -286,6 +286,13 @@ p { margin: 0; max-width: 58ch; }
 .catalogue {
   position: relative;
   background: var(--black);
+  /* The list below is pulled up by a negative margin equal to the stage's
+     height, which cancels the stage out of this box: height = stage + list
+     - stage = list. With all 24 rows the list is the taller of the two and
+     nothing shows. Filter down to two Trailers and the list is shorter than
+     the stage, so the section collapses under it and the sticky reel spills
+     over the cream band below. Reserving the stage's height stops that. */
+  min-height: calc(100svh - var(--header-h));
 }
 
 .catalogue__stage {
@@ -675,6 +682,7 @@ p { margin: 0; max-width: 58ch; }
   .row { grid-template-columns: minmax(52px, 18vw) minmax(0, 1fr); gap: 0 16px; }
   .row__k { display: none; }
 
+  .catalogue { min-height: 54svh; }
   .catalogue__stage { height: 54svh; }
   .catalogue__list { margin-top: calc(-54svh + 24px); }
 
