@@ -607,19 +607,6 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 }
 .row__k { text-align: right; }
 
-/* Floating numeral — typographic wallpaper in the negative space. */
-.floater {
-  position: absolute;
-  right: var(--gutter);
-  top: 8vh;
-  font-size: clamp(90px, 24vw, 280px);
-  line-height: 0.8;
-  letter-spacing: var(--tight);
-  opacity: 0.12;
-  pointer-events: none;
-  user-select: none;
-}
-
 /* --- filters ---------------------------------------------------- */
 
 .filters {
@@ -1104,8 +1091,6 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 
   .filmnav { flex-direction: column; gap: 28px; }
   .filmnav a, .filmnav a:last-child { max-width: 100%; text-align: left; align-items: flex-start; }
-
-  .floater { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
