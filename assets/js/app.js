@@ -34,9 +34,14 @@
 
   /* Touch devices never get a reel attached: there is no hover to opt in with,
      so autoplaying would pull tens of megabytes over cellular unasked. The
-     poster still carries the frame. */
-  function playReel(v, src) {
-    if (reduceMotion || noHover) return;
+     poster still carries the frame.
+
+     `force` is the one exception, and only the showcase catalogue passes it:
+     there the reel IS the interaction on a phone (see scroll-end focus), and
+     it holds one film at a time rather than the whole schedule. */
+  function playReel(v, src, force) {
+    if (reduceMotion) return;
+    if (noHover && !force) return;
     if (!v.getAttribute('src')) {
       v.preload = 'auto';
       v.setAttribute('src', src);
@@ -125,7 +130,34 @@
   var catalogueList = document.getElementById('catalogue-list');
   if (catalogueList) {
     var catalogueStage = document.getElementById('catalogue-stage');
+    var catalogueSection = document.querySelector('.catalogue');
     var current = null;
+
+    /* Without a pointer there is nothing to hover, so the schedule commits a
+       film when the scroll settles instead — see "scroll-end focus" below.
+       Everything a mouse does is left exactly as it was. */
+    var focusMode = noHover;
+    if (focusMode) catalogueSection.classList.add('catalogue--focus');
+
+    /* Reels holding a src, oldest first. A phone should not carry twenty-four
+       decoded films because the reader scrolled past them, so only the last
+       few keep their buffer; the files stay in the HTTP cache. */
+    var live = [];
+    /* Set by the focus engine below, called by the filter. */
+    var recommit = function () {};
+
+    function hold(v) {
+      var at = live.indexOf(v);
+      if (at > -1) live.splice(at, 1);
+      live.push(v);
+      while (live.length > 3) {
+        var old = live.shift();
+        old.pause();
+        old.removeAttribute('src');
+        old.preload = 'none';
+        old.load();
+      }
+    }
 
     films.forEach(function (film, i) {
       var v = reel('catalogue__media', film.hero || film.still);
@@ -135,9 +167,23 @@
       var a = el('a', 'row');
       a.href = 'film.html?f=' + encodeURIComponent(film.slug);
       a.appendChild(el('span', 'row__n', String(i + 1).padStart(2, '0')));
-      a.appendChild(el('span', 'row__t', film.title));
+      var title = el('span', 'row__t', film.title);
+      a.appendChild(title);
       a.appendChild(el('span', 'row__c', film.client || '—'));
       a.appendChild(el('span', 'row__k', film.category));
+
+      /* The cue rides inside the title cell rather than as a fifth grid child:
+         the row's columns differ at three widths, and a stray child would land
+         wherever the grid had room. It takes no height until its row has the
+         reel — the row opens for it on the commit (see .row__cue). */
+      if (focusMode) {
+        var cue = el('span', 'row__cue');
+        cue.appendChild(el('i', 'row__dot'));
+        cue.appendChild(el('span', null, 'Now playing'));
+        cue.setAttribute('aria-hidden', 'true');
+        title.appendChild(cue);
+      }
+
       li.appendChild(a);
       catalogueList.appendChild(li);
 
@@ -147,13 +193,18 @@
          out has never intersected, so it still arrives when it comes back. */
       li.setAttribute('data-reveal', '');
 
+      /* The src is needed again when the schedule comes back on screen, long
+         after this closure has done its work. */
+      v.reelSrc = film.video;
+
       function activate() {
         if (current === v) return;
         if (current) { current.classList.remove('is-active'); current.pause(); }
         [].forEach.call(catalogueList.children, function (n) { n.classList.remove('is-active'); });
         li.classList.add('is-active');
         v.classList.add('is-active');
-        playReel(v, film.video);
+        playReel(v, film.video, focusMode);
+        if (focusMode) hold(v);
         current = v;
       }
 
@@ -164,9 +215,137 @@
         li.classList.add('is-active');
         v.classList.add('is-active');
         current = v;
-        playReel(v, film.video);
+        /* On touch the first film waits for the schedule to actually reach the
+           screen — the page opens on a heading, and nothing should be fetched
+           over cellular for a section nobody has arrived at yet. */
+        if (!focusMode) playReel(v, film.video);
       }
     });
+
+    /* ---------- scroll-end focus ----------
+       A mouse names the film it is over. A finger can't, and picking films off
+       the viewport as they cross it would cut the reel every few hundred
+       milliseconds. So nothing changes while the page is moving: whatever is
+       playing keeps playing, however many rows pass over it, and the film is
+       only committed once the scroll has actually come to rest. Scrolling is
+       the looking; stopping is the choice. */
+    if (focusMode) {
+      var settleTimer = 0;
+      var touching = false;
+      var armed = false;          /* the schedule is on screen */
+      var masthead = document.querySelector('.masthead');
+
+      /* The reel is stuck under the header, so the row a reader has landed on
+         is the one nearest the middle of what is left of the screen. */
+      function focusOn() {
+        var head = masthead ? masthead.offsetHeight : 0;
+        var line = head + (window.innerHeight - head) / 2;
+        var rows = catalogueList.children;
+        var best = null, bestGap = Infinity, last = null;
+
+        for (var i = 0; i < rows.length; i++) {
+          var li = rows[i];
+          if (li.hidden) continue;
+          last = li;
+          var r = li.getBoundingClientRect();
+          if (r.bottom < 0 || r.top > window.innerHeight) continue;
+          var gap = Math.abs((r.top + r.bottom) / 2 - line);
+          if (gap < bestGap) { bestGap = gap; best = li; }
+        }
+
+        /* At the foot of the page the last rows can no longer reach the middle
+           of the screen — the document has run out of scroll. The row at that
+           end is the one being read. */
+        var y = window.scrollY || window.pageYOffset;
+        if (last && y + window.innerHeight >= document.documentElement.scrollHeight - 4) best = last;
+
+        return best;
+      }
+
+      function commit() {
+        if (!armed || touching) return;
+        var li = focusOn();
+        /* Landed back on the film already running: leave it alone. Restarting
+           it would punish the reader for looking around. */
+        if (li && !li.classList.contains('is-active')) li.activate();
+      }
+
+      function schedule(wait) {
+        clearTimeout(settleTimer);
+        settleTimer = setTimeout(commit, wait);
+      }
+
+      function resume() {
+        if (current) playReel(current, current.reelSrc, true);
+      }
+
+      /* `scrollend` knows when momentum has run out and when the finger is
+         still down mid-gesture; without it, a gap in the scroll stream is the
+         only signal there is, and the touch handlers below cover the case it
+         reads wrong — a finger held still on the glass with the page parked. */
+      var hasScrollEnd = 'onscrollend' in window;
+
+      window.addEventListener('scroll', function () {
+        clearTimeout(settleTimer);
+        if (!hasScrollEnd) schedule(140);
+      }, { passive: true });
+
+      if (hasScrollEnd) {
+        window.addEventListener('scrollend', function () { schedule(60); });
+      }
+
+      window.addEventListener('touchstart', function () {
+        touching = true;
+        clearTimeout(settleTimer);
+      }, { passive: true });
+
+      function released() {
+        touching = false;
+        /* A flick goes on scrolling after the finger leaves; those scroll
+           events push the commit back out again. This only lands when the
+           page was already at rest when the touch ended. */
+        schedule(hasScrollEnd ? 120 : 160);
+      }
+      window.addEventListener('touchend', released, { passive: true });
+      window.addEventListener('touchcancel', released, { passive: true });
+
+      /* Nothing is fetched until the schedule is on screen, and the reel stops
+         when it leaves — a film playing three sections above the reader costs
+         battery and shows nobody anything. */
+      if ('IntersectionObserver' in window) {
+        var stageIO = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) {
+              armed = true;
+              commit();
+              resume();
+            } else {
+              armed = false;
+              if (current) current.pause();
+            }
+          });
+        }, { threshold: 0.04 });
+        stageIO.observe(catalogueSection);
+      } else {
+        armed = true;
+        commit();
+        resume();
+      }
+
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) { if (current) current.pause(); }
+        else if (armed) resume();
+      });
+
+      recommit = commit;
+
+      /* Rotation changes where the middle of the screen is. */
+      var spin;
+      window.addEventListener('resize', function () {
+        clearTimeout(spin);
+        spin = setTimeout(commit, 220);
+      });
+    }
 
     /* Same list, same rows — the filter only hides them. Catalogue numbers
        stay put when filtered, so a row keeps the same number wherever you
@@ -202,6 +381,12 @@
         ) === -1) {
           shown[0].activate();
         }
+
+        /* On touch the schedule just changed length under a still page, so the
+           row in the middle of the screen is not the one that was there a
+           moment ago. Filtering is a deliberate act, not a scroll, so the film
+           follows it immediately. */
+        recommit();
 
         history.replaceState(null, '', value === 'All' ? location.pathname : '?c=' + encodeURIComponent(value));
       }

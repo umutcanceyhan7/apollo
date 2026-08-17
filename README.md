@@ -49,12 +49,38 @@ you meet it, so Trailers reads `10, 11` rather than `01, 02`. That's deliberate 
 number is the film's place in the archive, not its position in the current view. To
 renumber per view instead, set `row__n` inside `applyFilter` in `app.js`.
 
+### Picking a film without a pointer
+
+A mouse names the film it is over. A finger can't, so on a device with no hover the
+schedule commits one when the **scroll comes to rest** — `.catalogue--focus`, set at
+load from `(hover: none)`. Scrolling is the looking, stopping is the choice:
+
+- Nothing changes while the page moves. Whatever is playing keeps playing, however many
+  rows cross the screen — no cut every few hundred milliseconds on a flick.
+- The gesture is over on `scrollend`, and on a quiet 140ms in the scroll stream where
+  that event doesn't exist yet (most iPhones in the field). A finger resting on the
+  glass mid-gesture holds the commit back until `touchend`.
+- The film is then the row nearest the middle of the screen below the header — or, at
+  the foot of the page where no row can reach the middle any more, the last one.
+- Land back on the film already running and it is left alone rather than restarted.
+
+Because the reel now changes on its own, the row it belongs to has to say so, in the
+page's own language: the rows go quieter than hover ever takes them, the committed row
+keeps its hairline while the others dim theirs, and it alone carries `● NOW PLAYING`
+(`.row__cue`). The cue holds no height until the commit — the row opens under its title
+for it, rather than every title carrying an empty line. The frame arrives on a slow
+scale-out, so a change of film reads as a dissolve rather than a swap.
+
+One film is fetched at a time, nothing before the schedule is on screen, and the reel
+stops when it leaves; only the last three keep their buffer, so scrolling the archive
+doesn't leave twenty-four decoded films on a phone. Desktop hover is untouched.
+
 ## Pages
 
 | File | What it is |
 | --- | --- |
 | `index.html` | Hero only — five titles at display scale, hovering one runs that film's reel full-bleed behind them — then the studio note and a one-line CTA |
-| `showcase.html` | The catalogue — 24 numbered hairline rows over a pinned reel that swaps on hover, filtered by category |
+| `showcase.html` | The catalogue — 24 numbered hairline rows over a pinned reel that swaps on hover, or on scroll-end where there is no hover, filtered by category |
 | `production.html` | Ethos + the six principles as a hovered reel of behind-the-scenes stills — one 3D-tilting frame, no numerals |
 | `about.html` | Studio text, left-aligned, two-column with sticky side labels; display lines rise word by word as they arrive |
 | `contact.html` | Form in the system's type; submitting opens the user's mail client |
@@ -155,11 +181,14 @@ ffmpeg -ss <15% of duration> -i "assets/films/<file>.mp4" -t 12 -an \
 Where footage plays:
 
 - **Homepage hero** — one reel per index title, muted loop at 38% behind the type.
-- **Showcase** — pinned reel behind the rows, swapping on hover at 45%.
+- **Showcase** — pinned reel behind the rows at 45%, swapping on hover, or on scroll-end
+  where there is no pointer to hover with.
 - **Film pages** — full player with native controls, poster from the still.
 
 Sources are attached on demand, not at page load, so a 24-film page opens one
 connection rather than 24. Reduced-motion visitors get posters and never a moving frame.
+The hero and the ethos reel still fetch nothing on a touch device — only the showcase
+opts back in, because there the reel is the interaction rather than a background.
 
 ### Two cuts per film
 

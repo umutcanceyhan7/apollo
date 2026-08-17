@@ -314,6 +314,82 @@ p { margin: 0; max-width: 58ch; }
 }
 .catalogue__media.is-active { opacity: 0.45; }
 
+/* --- catalogue without a pointer: the committed film --------------
+   With no hover the reel changes on its own, when the scroll comes to
+   rest, so the schedule has to say which row it belongs to — otherwise
+   the picture behind the type simply changes for no reason the reader
+   can see. Three signals, all of them already in the page's language:
+   the rows go quieter than the hover state ever takes them, the row
+   that holds the reel keeps its hairline while the others give theirs
+   up, and it alone carries the cue. The film arrives on a slow scale
+   out, so the cut reads as a dissolve rather than a swap. */
+
+.catalogue--focus .catalogue__media {
+  transform: scale(1.06);
+  transition: opacity 0.7s ease, transform 1.4s ease;
+}
+.catalogue--focus .catalogue__media.is-active { transform: scale(1); }
+
+.catalogue--focus .row {
+  opacity: 0.26;
+  transition: opacity 0.5s ease;
+}
+.catalogue--focus li.is-active > .row { opacity: 1; }
+
+/* The hairline is drawn twice: the row's own, dimmed, and a full-strength
+   copy over it that draws itself in when the row takes the reel. */
+.catalogue--focus .catalogue__list > li {
+  position: relative;
+  border-top-color: rgba(236, 228, 180, 0.3);
+}
+.catalogue--focus .catalogue__list > li::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  border-top: var(--hair);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.catalogue--focus .catalogue__list > li.is-active::after { transform: scaleX(1); }
+
+/* The cue takes no room until the row has the reel: an empty line reserved
+   under all twenty-four titles reads as a gap nobody asked for. The row opens
+   for it instead — the space is the announcement, so it moves on the same
+   commit as the hairline and the film. */
+.row__cue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 0;
+  margin-top: 0;
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: height 0.45s cubic-bezier(0.22, 0.61, 0.36, 1),
+              margin-top 0.45s cubic-bezier(0.22, 0.61, 0.36, 1),
+              opacity 0.35s ease 0.14s;
+}
+li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
+
+.row__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cream);
+  animation: cue-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes cue-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
 /* The list rides over the stage. */
 .catalogue__list {
   position: relative;
@@ -873,6 +949,7 @@ p { margin: 0; max-width: 58ch; }
   /* A 0.01ms infinite animation still churns frames for no visible gain —
      the looping card motion is switched off outright instead. */
   .ethos__sway, .ethos__shot { animation: none !important; }
+  .row__dot { animation: none !important; }
   .ethos__tilt { transform: none !important; }
 
   /* Entrances have no start state to animate from, so they simply are. */
