@@ -509,8 +509,22 @@ p { margin: 0; max-width: 58ch; }
 
 /* Flow mode puts the frame above the words — the photograph leads, the
    list follows it. At this size the sway is halved: the same gesture read
-   across 600px of frame would swing the corners into the gutter. */
+   across 600px of frame would swing the corners into the gutter.
+   On a phone it holds under the masthead while the list scrolls past: the
+   frame is the thing the words are changing, so it has to still be on
+   screen by the time you reach the last of them. Held to a tall, narrow
+   viewport — anywhere wider or shorter the frame is a third of a metre of
+   pinned photograph and the list has nowhere left to scroll. */
 .ethos--flow .ethos__card { order: -1; }
+
+@media (max-width: 780px) and (max-aspect-ratio: 3 / 4) {
+  .ethos--flow .ethos__card {
+    position: sticky;
+    top: calc(var(--header-h) + 12px);
+    /* Under the masthead's own z-index, so the header still crosses over it. */
+    z-index: 1;
+  }
+}
 .ethos--flow .ethos__sway { animation-name: ethos-sway-wide; }
 
 /* Pointer tilt and idle sway are separate elements so they compose

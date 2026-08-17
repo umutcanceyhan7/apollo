@@ -505,11 +505,23 @@
      Splitting has to happen before the observer runs, or the words are
      created already at rest and the line simply appears. */
 
+  /* Every word rides in its own clip box, so the line must not re-wrap once
+     the boxes exist. On a phone a display line sits one word to the row with
+     a few pixels to spare, and the smallest change in metrics — the webfont
+     arriving — re-flows it: the words appear stacked, blink, and snap back
+     together mid-entrance. Below that width the line rises as one block
+     instead, the same entrance the rest of the page already uses. */
+  var splitWords = window.matchMedia('(min-width: 780px)').matches;
+
   [].forEach.call(document.querySelectorAll('[data-split]'), function (node) {
     var text = node.textContent.trim();
     /* A line the page fills in later — a film title with no slug behind it —
        has nothing to split, and one empty word would still clip a space. */
     if (!text) return;
+
+    /* Dropped, not ignored: the entrance rules key off the attribute, and a
+       line left carrying it would have no start state and simply appear. */
+    if (!splitWords) { node.removeAttribute('data-split'); return; }
 
     var words = text.split(/\s+/);
     /* `data-reveal="120"` holds the line back; its words wait with it. */
@@ -540,29 +552,42 @@
     if (d && !n.hasAttribute('data-split')) n.style.transitionDelay = d + 'ms';
   });
 
+  function startReveals() {
+    var revealIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        en.target.classList.add('is-in');
+        revealIO.unobserve(en.target);
+      });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.06 });
+    reveals.forEach(function (n) { revealIO.observe(n); });
+
+    /* Insurance. The start state hides real copy, so if the observer never
+       delivers — an engine that stubs it, a webview that never gives the
+       page a rendering opportunity — the page shows itself anyway. A tab
+       that is merely in the background is excluded: it has not been shown
+       yet, and will get its entrance when it is. */
+    setTimeout(function () {
+      if (document.hidden) return;
+      if (document.querySelector('[data-reveal].is-in')) return;
+      reveals.forEach(function (n) { n.classList.add('is-in'); });
+    }, 2500);
+  }
+
   if (reveals.length) {
     if (reduceMotion || !('IntersectionObserver' in window)) {
       reveals.forEach(function (n) { n.classList.add('is-in'); });
+    } else if (document.fonts && document.fonts.ready) {
+      /* Nothing enters until the face is in. Copy re-wraps when the metrics
+         change, and a line that re-wraps mid-rise reads as a blink; held at
+         opacity 0 the swap happens where nobody can see it. The wait is
+         capped, because a face that never arrives must not hold the page. */
+      var begun = false;
+      var begin = function () { if (!begun) { begun = true; startReveals(); } };
+      document.fonts.ready.then(begin);
+      setTimeout(begin, 1200);
     } else {
-      var revealIO = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (!en.isIntersecting) return;
-          en.target.classList.add('is-in');
-          revealIO.unobserve(en.target);
-        });
-      }, { rootMargin: '0px 0px -10% 0px', threshold: 0.06 });
-      reveals.forEach(function (n) { revealIO.observe(n); });
-
-      /* Insurance. The start state hides real copy, so if the observer never
-         delivers — an engine that stubs it, a webview that never gives the
-         page a rendering opportunity — the page shows itself anyway. A tab
-         that is merely in the background is excluded: it has not been shown
-         yet, and will get its entrance when it is. */
-      setTimeout(function () {
-        if (document.hidden) return;
-        if (document.querySelector('[data-reveal].is-in')) return;
-        reveals.forEach(function (n) { n.classList.add('is-in'); });
-      }, 2500);
+      startReveals();
     }
   }
 
