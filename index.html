@@ -35,17 +35,23 @@
     <div class="hero__stage" id="hero-stage" aria-hidden="true"></div>
     <span class="floater" aria-hidden="true">2022</span>
 
-    <div class="hero__row" data-reveal>
-      <span class="label dim">Istanbul — Est. 2022</span>
-      <span class="label dim">Selected films</span>
-    </div>
+    <!-- `display: contents` on every width the desktop hero uses, so these
+         three sit in the hero's flex column exactly as they always have. On a
+         phone the deck becomes a real box: one screen pinned over the reel,
+         holding the index in its bottom corner (see .hero--track). -->
+    <div class="hero__deck">
+      <div class="hero__row hero__row--top" data-reveal>
+        <span class="label dim">Istanbul — Est. 2022</span>
+        <span class="label dim">Selected films</span>
+      </div>
 
-    <ul class="index" id="index" data-reveal="90"></ul>
+      <ul class="index" id="index" data-reveal="90"></ul>
 
-    <div class="hero__row" data-reveal="180">
-      <span class="label" id="hero-cat"></span>
-      <span class="fine dim" id="hero-client"></span>
-      <a class="link" href="showcase.html">Full archive <span aria-hidden="true">→</span></a>
+      <div class="hero__row hero__row--meta" data-reveal="180">
+        <span class="label" id="hero-cat"></span>
+        <span class="fine dim" id="hero-client"></span>
+        <a class="link" href="showcase.html">Full archive <span aria-hidden="true">→</span></a>
+      </div>
     </div>
   </section>
 

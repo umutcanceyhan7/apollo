@@ -66,11 +66,63 @@
 
   var index = document.getElementById('index');
   if (index) {
+    var hero = document.querySelector('.hero');
+    var deck = document.querySelector('.hero__deck');
     var stage = document.getElementById('hero-stage');
+    var metaRow = document.querySelector('.hero__row--meta');
     var metaCat = document.getElementById('hero-cat');
     var metaClient = document.getElementById('hero-client');
     var slugs = window.APOLLO_INDEX || [];
     var activators = [];
+    var reels = [];
+
+    /* Phone mode: the reel is pinned and the scroll picks the film. Set by
+       heroSetMode() below, and consulted while the index is being built. */
+    var trackOn = null;
+    var trackAt = -1;
+
+    /* One decoded film is the point; five held at once is a phone carrying
+       four reels nobody is looking at. Oldest buffers are let go — the files
+       stay in the HTTP cache, so scrolling back is a re-attach, not a
+       re-download. Same bargain the catalogue strikes. */
+    var trackLive = [];
+    function trackHold(v) {
+      var at = trackLive.indexOf(v);
+      if (at > -1) trackLive.splice(at, 1);
+      trackLive.push(v);
+      while (trackLive.length > 2) {
+        var old = trackLive.shift();
+        old.pause();
+        old.removeAttribute('src');
+        old.preload = 'none';
+        old.load();
+      }
+    }
+
+    /* The reel is the interaction on a phone — the same exception the
+       catalogue makes — so it is allowed to fetch without a hover to ask
+       with. A reader who has said they are metering the connection is taken
+       at their word, and gets the posters. */
+    var saveData = !!(navigator.connection && navigator.connection.saveData);
+
+    /* The metadata belongs to the film on screen, so it changes with it
+       rather than being swapped out from under the reader mid-fade. */
+    var metaTimer = 0;
+    function setMeta(film) {
+      var cat = film.category;
+      var client = film.client || film.title;
+      function write() {
+        metaCat.textContent = cat;
+        metaClient.textContent = client;
+      }
+      if (!trackOn || reduceMotion || !metaRow) { write(); return; }
+      metaRow.classList.add('is-swapping');
+      clearTimeout(metaTimer);
+      metaTimer = setTimeout(function () {
+        write();
+        metaRow.classList.remove('is-swapping');
+      }, 200);
+    }
 
     slugs.forEach(function (slug, i) {
       var film = bySlug[slug];
@@ -88,17 +140,24 @@
 
       var v = reel('hero__media' + (i === 0 ? ' is-active' : ''), film.hero || film.still);
       stage.appendChild(v);
+      reels.push(v);
+      v.reelSrc = film.video;
 
+      /* The one place the active film is chosen, whoever is asking — a
+         cursor, a focus ring, or the scroll. Name, frame and metadata move
+         together here or not at all, so the corner can never be reading
+         one film while the screen plays another. */
       function activate() {
+        trackAt = i;
         [].forEach.call(index.children, function (n) { n.classList.remove('is-active'); });
         li.classList.add('is-active');
         [].forEach.call(stage.querySelectorAll('.hero__media'), function (n) {
           if (n !== v) { n.classList.remove('is-active'); n.pause(); }
         });
         v.classList.add('is-active');
-        playReel(v, film.video);
-        metaCat.textContent = film.category;
-        metaClient.textContent = film.client || film.title;
+        playReel(v, film.video, trackOn && !saveData);
+        if (trackOn) trackHold(v);
+        setMeta(film);
       }
 
       activators.push(activate);
@@ -111,18 +170,119 @@
     if (first) {
       metaCat.textContent = first.category;
       metaClient.textContent = first.client || first.title;
+      /* The first film is already the active one in the markup above — say so,
+         so the poster cycle starts on the second and the scroll track knows
+         what it is moving away from. */
+      trackAt = 0;
     }
 
-    /* Touch devices have no hover, so the index would sit on one frame forever.
-       Cycle the posters instead — no video is fetched. Stops on first touch. */
-    if (noHover && !reduceMotion && activators.length > 1) {
-      var at = 0;
-      var timer = setInterval(function () {
-        at = (at + 1) % activators.length;
-        activators[at]();
+    /* Touch devices wide enough to keep the wall of titles have no hover, so
+       the index would sit on one frame forever. Cycle the posters instead —
+       no video is fetched. Stops on first touch, and never runs on a phone,
+       where the scroll is doing the choosing. */
+    var cycleTimer = 0;
+    var cycleDone = false;
+    function stopCycle() { clearInterval(cycleTimer); cycleTimer = 0; }
+    function startCycle() {
+      if (cycleTimer || cycleDone || trackOn || reduceMotion || !noHover) return;
+      if (activators.length < 2) return;
+      cycleTimer = setInterval(function () {
+        activators[(trackAt + 1) % activators.length]();
       }, 6000);
-      index.addEventListener('touchstart', function () { clearInterval(timer); }, { passive: true, once: true });
     }
+    index.addEventListener('touchstart', function () {
+      cycleDone = true;
+      stopCycle();
+    }, { passive: true, once: true });
+
+    /* ---------- phone: the scroll track ----------
+       The hero is several screens tall with one screen pinned to the top of
+       it, so the distance the hero still has to travel while pinned *is* the
+       reader's position in the five. Nothing here reads the viewport for
+       which row is nearest the middle — there are no rows to be near. */
+
+    var trackRaf = 0;
+    var trackArmed = true;
+
+    function trackTick() {
+      trackRaf = 0;
+      if (!trackOn || !deck) return;
+      var hr = hero.getBoundingClientRect();
+      var dr = deck.getBoundingClientRect();
+      /* How far the pinned screen has slid down inside its own track. The
+         deck starts flush with the top of the hero and ends flush with the
+         bottom of it, so this needs no header height and no scroll offset —
+         it is measured entirely between the two boxes. */
+      var travel = hr.height - dr.height;
+      var p = travel > 0 ? (dr.top - hr.top) / travel : 0;
+      p = Math.min(Math.max(p, 0), 1);
+      var i = Math.round(p * (activators.length - 1));
+      if (i !== trackAt && activators[i]) activators[i]();
+    }
+
+    function trackSchedule() {
+      if (trackRaf || !trackOn) return;
+      trackRaf = requestAnimationFrame(trackTick);
+    }
+
+    window.addEventListener('scroll', trackSchedule, { passive: true });
+
+    /* A film running three sections above the reader costs battery and shows
+       nobody anything. Nothing plays until the hero is on screen, and the
+       reel stops when it leaves. */
+    if ('IntersectionObserver' in window && hero) {
+      var heroIO = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          trackArmed = en.isIntersecting;
+          if (!trackArmed) {
+            reels.forEach(function (v) { v.pause(); });
+          } else if (trackOn) {
+            trackTick();
+            if (trackAt > -1 && !saveData) playReel(reels[trackAt], reels[trackAt].reelSrc, true);
+          }
+        });
+      }, { threshold: 0.02 });
+      heroIO.observe(hero);
+    }
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) { reels.forEach(function (v) { v.pause(); }); }
+      else if (trackArmed && trackOn && trackAt > -1 && !saveData) {
+        playReel(reels[trackAt], reels[trackAt].reelSrc, true);
+      }
+    });
+
+    /* A window can cross between the two, so the mode is re-derived rather
+       than decided once at load — the same handling the ethos reel uses. */
+    function heroSetMode() {
+      var on = window.matchMedia('(max-width: 780px)').matches;
+      if (on === trackOn) return;
+      trackOn = on;
+      if (!hero) return;
+      hero.classList.toggle('hero--track', on);
+      if (on) {
+        hero.style.setProperty('--steps', String(activators.length));
+        stopCycle();
+        /* The film the desktop layout left showing was chosen by a cursor,
+           not by where the page is. Forget it and let the track say. */
+        trackAt = -1;
+        trackTick();
+      } else {
+        hero.style.removeProperty('--steps');
+        startCycle();
+      }
+    }
+
+    heroSetMode();
+
+    var heroResize;
+    window.addEventListener('resize', function () {
+      clearTimeout(heroResize);
+      heroResize = setTimeout(function () {
+        heroSetMode();
+        trackTick();
+      }, 150);
+    });
   }
 
   /* ---------- catalogue: the work as a screening schedule ---------- */
@@ -209,8 +369,14 @@
       }
 
       li.activate = activate;
-      a.addEventListener('mouseenter', activate);
-      a.addEventListener('focus', activate);
+      /* A tap on a phone fires mouseenter and focus on the way to the film
+         page, so a pressed row would take the reel for the half second before
+         the page changes — and hold it, wrongly, on the way back. Where the
+         scroll makes the choice, pressing a row only opens it. */
+      if (!focusMode) {
+        a.addEventListener('mouseenter', activate);
+        a.addEventListener('focus', activate);
+      }
       if (i === 0) {
         li.classList.add('is-active');
         v.classList.add('is-active');
@@ -335,6 +501,17 @@
       document.addEventListener('visibilitychange', function () {
         if (document.hidden) { if (current) current.pause(); }
         else if (armed) resume();
+      });
+
+      /* Coming back from a film page can restore the schedule from the
+         back/forward cache: the observer has nothing new to report, and the
+         reel comes back stopped where it was. Resolve the focus once and pick
+         the film up again, so the list a reader returns to is the list they
+         left rather than a still. */
+      window.addEventListener('pageshow', function (e) {
+        if (!e.persisted || !armed) return;
+        commit();
+        resume();
       });
 
       recommit = commit;
