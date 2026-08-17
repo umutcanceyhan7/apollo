@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["serve.py", "4173"],
       "port": 4173
+    },
+    {
+      "name": "apollo-alt2",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["serve.py", "4175"],
+      "port": 4175
     }
   ]
 }

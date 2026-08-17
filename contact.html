@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400&display=swap">
 <link rel="stylesheet" href="assets/css/apollo.css">
+<!-- Set before first paint: the entrances in apollo.css only hide their
+     elements under `.js`, so a page without script stays fully readable. -->
+<script>document.documentElement.className += ' js';</script>
 </head>
 <body>
 
@@ -30,42 +33,42 @@
 
   <section class="band band--dark">
     <div class="stack stack--lg">
-      <h1 class="display">Contact us.</h1>
-      <p class="lede dim">Tell us what you're making. We read everything.</p>
+      <h1 class="display" data-split data-reveal>Contact us.</h1>
+      <p class="lede dim" data-reveal="140">Tell us what you're making. We read everything.</p>
     </div>
   </section>
 
   <section class="band band--dark band--tight">
     <div class="columns">
 
-      <div class="stack stack--sm">
+      <div class="stack stack--sm" data-reveal>
         <span class="label dim">Direct</span>
         <a class="fine" href="mailto:info@apollofilms.co">info@apollofilms.co</a>
         <span class="fine dim">Istanbul, Turkey</span>
       </div>
 
       <form class="form" id="contact-form" novalidate>
-        <div class="field">
+        <div data-reveal class="field">
           <label for="first">First name (required)</label>
           <input id="first" name="first" type="text" autocomplete="given-name" required>
         </div>
-        <div class="field">
+        <div data-reveal="60" class="field">
           <label for="last">Last name (required)</label>
           <input id="last" name="last" type="text" autocomplete="family-name" required>
         </div>
-        <div class="field">
+        <div data-reveal="120" class="field">
           <label for="email">Email (required)</label>
           <input id="email" name="email" type="email" autocomplete="email" required>
         </div>
-        <div class="field field--row">
+        <div data-reveal="180" class="field field--row">
           <input id="news" name="news" type="checkbox">
           <label for="news">Sign up for news and updates</label>
         </div>
-        <div class="field">
+        <div data-reveal="240" class="field">
           <label for="subject">Subject (required)</label>
           <input id="subject" name="subject" type="text" required>
         </div>
-        <div class="field">
+        <div data-reveal="300" class="field">
           <label for="message">Message (required)</label>
           <textarea id="message" name="message" rows="5" required></textarea>
         </div>
@@ -79,7 +82,7 @@
 
   <section class="band band--cream">
     <div class="stack stack--lg">
-      <h2 class="display">Let's begin.</h2>
+      <h2 class="display" data-split data-reveal>Let's begin.</h2>
       <a class="link" href="showcase.html">See the work <span aria-hidden="true">→</span></a>
     </div>
   </section>

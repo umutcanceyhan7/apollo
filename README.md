@@ -55,10 +55,51 @@ renumber per view instead, set `row__n` inside `applyFilter` in `app.js`.
 | --- | --- |
 | `index.html` | Hero only — five titles at display scale, hovering one runs that film's reel full-bleed behind them — then the studio note and a one-line CTA |
 | `showcase.html` | The catalogue — 24 numbered hairline rows over a pinned reel that swaps on hover, filtered by category |
-| `production.html` | Ethos + six principles as a numbered display list |
-| `about.html` | Studio text, left-aligned, two-column with side labels |
+| `production.html` | Ethos + the six principles as a hovered reel of behind-the-scenes stills — one 3D-tilting frame, no numerals |
+| `about.html` | Studio text, left-aligned, two-column with sticky side labels; display lines rise word by word as they arrive |
 | `contact.html` | Form in the system's type; submitting opens the user's mail client |
 | `film.html?f=<slug>` | Full-bleed player with controls, cast/crew credits, prev/next |
+
+## The ethos reel
+
+`production.html` carries the six principles as `.ethos`. The numerals are gone; the
+sequence is carried by motion instead, and one card serves all six words:
+
+- **`.ethos--follow`** — a fine pointer and a viewport of 860px or more. The frame is
+  `position: fixed`, rides the cursor, and tilts with it (`--rx` / `--ry` on
+  `.ethos__tilt`). Hover or focus a word to call its still.
+- **`.ethos--flow`** — everything else. There is no cursor to hover with, so the frame
+  sits above the list and the list steps through itself every 2.8s, the dwell drawn
+  along each row's own top hairline. Tapping a word takes the sequence from there.
+
+The mode is re-derived on resize, so a window crossing 860px switches cleanly. Stills
+live in `assets/backstage/cards/` at 1200px wide — behind-the-scenes frames, one per
+principle, named after the word they belong to. The originals stay in
+`assets/backstage/`. Two `<img>` layers cross-fade; the first frame ships in the markup
+so the card is a still even with no script, and the rest load as the reel reaches them.
+Depth is rotation only — `ethos-sway` on the frame, `ethos-drift` on the still. No
+shadow, no radius, no fill, per the system's non-negotiables.
+
+## Entrances
+
+Every page uses the same two motion hooks, both read by `app.js`:
+
+- **`data-reveal`** — the element fades and rises 20px once, the first time it
+  intersects, then stays. On `.rule` it draws the hairline out from the left instead.
+  An optional value is a delay in ms (`data-reveal="140"`), so a lede can land after
+  the heading above it without a rule per page. Catalogue rows opt in from JS, since
+  they are built rather than authored.
+- **`data-split`** — splits a display line into words that rise out of their own
+  baseline, staggered 45ms apart. Works on lines the page fills in later, like a film
+  title, because splitting runs after the detail block. A `data-reveal` delay on the
+  same element offsets the whole line.
+
+`.columns--sticky` holds the label column while its prose scrolls past, from 900px up.
+
+Both hooks are gated on `.js` (set by an inline script in each `<head>`), so a page
+without script is fully readable rather than blank, and a 2.5s fallback reveals
+everything if the observer never delivers. Nothing here changes a colour, a size, or a
+weight — the page arrives, then it is the same page it always was.
 
 ## The design system
 
@@ -96,18 +137,20 @@ and secondary text keep A24's small tracked treatment (`.label` at 12px, `.fine`
 
 ## Local footage
 
-`assets/films/` holds 21 720p reels, each matched to its film by name. Filenames keep
+`assets/films/` holds 24 720p reels, each matched to its film by name. Filenames keep
 their delivered spaces and parens — `encodeURI` in `films.js` handles that.
 
-**Three films have no reel of their own** and currently borrow the nearest one. They're
-flagged `substituteReel: true` in `films.js` — drop the missing files in and point the
-`REEL` entry at them:
+Every film now carries its own reel — no entry borrows another's footage, and the
+`substituteReel` flag is gone from `films.js`.
 
-| Film | Borrowing |
-| --- | --- |
-| La Casa (Short Films) | Amore Serpente |
-| La Casa (Trailers) | Amore Serpente Trailer |
-| Club Marvy | Penti Beach |
+Loops are cut to one house recipe: 12s, silent, 720p25, starting at 15% into the master
+(the point every earlier loop was cut from) —
+
+```
+ffmpeg -ss <15% of duration> -i "assets/films/<file>.mp4" -t 12 -an \
+  -c:v libx264 -crf 27 -preset slow -maxrate 1500k -bufsize 3000k \
+  -pix_fmt yuv420p -r 25 -movflags +faststart "assets/films/loops/<file>.mp4"
+```
 
 Where footage plays:
 

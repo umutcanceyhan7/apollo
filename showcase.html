@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400&display=swap">
 <link rel="stylesheet" href="assets/css/apollo.css">
+<!-- Set before first paint: the entrances in apollo.css only hide their
+     elements under `.js`, so a page without script stays fully readable. -->
+<script>document.documentElement.className += ' js';</script>
 </head>
 <body>
 
@@ -30,14 +33,14 @@
 
   <section class="band band--dark">
     <div class="stack stack--lg">
-      <h1 class="display">This is where our work lives.</h1>
-      <p class="lede dim">Each piece reflects a different angle of what we do — narrative, image, rhythm,
+      <h1 class="display" data-split data-reveal>This is where our work lives.</h1>
+      <p class="lede dim" data-reveal="140">Each piece reflects a different angle of what we do — narrative, image, rhythm,
         tone. We focus on projects that carry weight, both visually and emotionally.</p>
     </div>
   </section>
 
   <section class="band band--dark catalogue__filters">
-    <div class="filters" role="group" aria-label="Filter films by category">
+    <div class="filters" data-reveal role="group" aria-label="Filter films by category">
       <button type="button" data-filter="All" aria-pressed="true">All</button>
       <button type="button" data-filter="Trailers" aria-pressed="false">Trailers</button>
       <button type="button" data-filter="Brand Works" aria-pressed="false">Brand Works</button>
@@ -53,7 +56,7 @@
 
   <section class="band band--cream">
     <div class="stack stack--lg">
-      <h2 class="display">Bring us the brief.</h2>
+      <h2 class="display" data-split data-reveal>Bring us the brief.</h2>
       <a class="btn" href="contact.html">Contact the studio</a>
     </div>
   </section>

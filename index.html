@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400&display=swap">
 <link rel="stylesheet" href="assets/css/apollo.css">
+<!-- Set before first paint: the entrances in apollo.css only hide their
+     elements under `.js`, so a page without script stays fully readable. -->
+<script>document.documentElement.className += ' js';</script>
 </head>
 <body>
 
@@ -32,14 +35,14 @@
     <div class="hero__stage" id="hero-stage" aria-hidden="true"></div>
     <span class="floater" aria-hidden="true">2022</span>
 
-    <div class="hero__row">
+    <div class="hero__row" data-reveal>
       <span class="label dim">Istanbul — Est. 2022</span>
       <span class="label dim">Selected films</span>
     </div>
 
-    <ul class="index" id="index"></ul>
+    <ul class="index" id="index" data-reveal="90"></ul>
 
-    <div class="hero__row">
+    <div class="hero__row" data-reveal="180">
       <span class="label" id="hero-cat"></span>
       <span class="fine dim" id="hero-client"></span>
       <a class="link" href="showcase.html">Full archive <span aria-hidden="true">→</span></a>
@@ -48,8 +51,8 @@
 
   <section class="band band--dark">
     <div class="stack stack--xl">
-      <h1 class="display">Crafting timeless content.</h1>
-      <div class="columns">
+      <h1 class="display" data-split data-reveal>Crafting timeless content.</h1>
+      <div class="columns columns--sticky" data-reveal>
         <p class="label dim">The studio</p>
         <div class="prose">
           <p>Apollo works at the intersection of cinema, culture, and commerce. Founded and led by Rafael
@@ -65,7 +68,7 @@
 
   <section class="band band--cream">
     <div class="stack stack--lg">
-      <h2 class="display display--line">Let's make something.</h2>
+      <h2 class="display display--line" data-split data-reveal>Let's make something.</h2>
       <a class="btn" href="contact.html">Start a project</a>
     </div>
   </section>

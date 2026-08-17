@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400&display=swap">
 <link rel="stylesheet" href="assets/css/apollo.css">
+<!-- Set before first paint: the entrances in apollo.css only hide their
+     elements under `.js`, so a page without script stays fully readable. -->
+<script>document.documentElement.className += ' js';</script>
 </head>
 <body>
 
@@ -30,15 +33,15 @@
 
   <section class="band band--dark">
     <div class="stack stack--lg">
-      <h1 class="display">Modern day storytellers.</h1>
-      <p class="lede dim">Apollo works at the intersection of cinema, culture, and commerce.</p>
+      <h1 class="display" data-split data-reveal>Modern day storytellers.</h1>
+      <p class="lede dim" data-reveal>Apollo works at the intersection of cinema, culture, and commerce.</p>
     </div>
   </section>
 
   <section class="band band--cream">
     <div class="stack stack--xl">
 
-      <div class="columns">
+      <div class="columns columns--sticky" data-reveal>
         <p class="label dim">The studio</p>
         <div class="prose">
           <p>Founded and led by Rafael Indiana Çetin — a filmmaker shaped by a lifetime between Berlin,
@@ -51,9 +54,9 @@
         </div>
       </div>
 
-      <hr class="rule">
+      <hr class="rule" data-reveal>
 
-      <div class="columns">
+      <div class="columns columns--sticky" data-reveal>
         <p class="label dim">Founded 2022</p>
         <div class="prose">
           <p>Apollo Films was founded in 2022 by filmmaker and jewelry designer Rafael Indiana Çetin. With a
@@ -65,9 +68,9 @@
         </div>
       </div>
 
-      <hr class="rule">
+      <hr class="rule" data-reveal>
 
-      <div class="columns">
+      <div class="columns columns--sticky" data-reveal>
         <p class="label dim">Name</p>
         <div class="prose">
           <p>Inspired by Apollo, the Greek god of light and order, the studio moves with intent. Our work is
@@ -81,17 +84,17 @@
 
   <section class="band band--dark">
     <div class="stack stack--lg">
-      <h2 class="display">Apollo Films makes stories that hold up, in the moment and in memory.</h2>
+      <h2 class="display" data-split data-reveal>Apollo Films makes stories that hold up, in the moment and in memory.</h2>
       <div class="factrow">
-        <div>
+        <div data-reveal>
           <span class="label dim">Founder</span>
           <span class="h3">Rafael Indiana Çetin</span>
         </div>
-        <div>
+        <div data-reveal>
           <span class="label dim">Based</span>
           <span class="h3">Istanbul, Turkey</span>
         </div>
-        <div>
+        <div data-reveal>
           <span class="label dim">Enquiries</span>
           <a class="h3" href="mailto:info@apollofilms.co">info@apollofilms.co</a>
         </div>
@@ -102,7 +105,7 @@
 
   <section class="band band--cream">
     <div class="stack stack--lg">
-      <h2 class="display">Tell us the story.</h2>
+      <h2 class="display" data-split data-reveal>Tell us the story.</h2>
       <a class="btn" href="contact.html">Get in touch</a>
     </div>
   </section>

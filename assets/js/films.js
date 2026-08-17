@@ -24,6 +24,7 @@ const CDN = 'https://images.squarespace-cdn.com/content/v1/6800c8341300e144920e7
 const FULL = '';   // e.g. 'https://media.apollofilms.co/films'
 
 const FILE = {
+  clubMarvy:    'club_marvy_v1 (720p).mp4',
   constanze:    'constanze_in_istanbul_v1 (720p).mp4',
   dagi:         'dagi_islands_v1 (720p).mp4',
   leoneDining:  'drole_de_monsieur_-_il_leone_v1 (720p) (1).mp4',
@@ -35,6 +36,8 @@ const FILE = {
   vienna:       'drykorn_-_midnight_in_vienna_v1 (720p).mp4',
   jack:         'jack_daniels_-_jack_lives_here_v1 (720p).mp4',
   koton:        'koton_-_blue_voyage_v1 (720p).mp4',
+  laCasa:       'la_casa_de_raisa_vanessa_v1 (720p).mp4',
+  laCasaTr:     'la_casa_de_raisa_vanessa_teaser_v1 (720p).mp4',
   leija:        'leija_v1 (720p).mp4',
   penti:        'penti_beach_v1 (720p).mp4',
   atelier:      'rafael_indiana_-_atelier_v1 (720p).mp4',
@@ -234,20 +237,19 @@ window.APOLLO_FILMS = [
   },
   {
     slug: 'raisavanessa2',
-    title: 'La Casa',
+    title: 'La Casa De Raisa Vanessa',
     client: 'Raisa Vanessa',
     category: 'Short Films',
     still: CDN + '/79cc464e-124d-4273-8f0f-e5a682abe575/La_Casa_De_Raisa_Vanessa_1133585588thumbnail.jpg',
     hero: CDN + '/eae7bf91-d0b0-471a-b153-ae761f860172/LA+CASA+DE+RAISA+VANESSA.JPG',
-    video: REEL.serpente,
-    substituteReel: true,
+    video: REEL.laCasa,
     credits: CREDITS.laCasa,
     cast: CAST.laCasa,
     alsoCredited: ALSO.laCasa
   },
   {
     slug: 'amoreserpente2',
-    title: 'Amore Serpente',
+    title: 'Raisa Vanessa Amore Serpente',
     client: 'Raisa Vanessa',
     category: 'Short Films',
     still: CDN + '/6ab2f744-4c48-475b-9119-d50f8f376e33/Raisa_Vanessa_-_Amore_Serpente_1122243071thumbnail.jpg',
@@ -255,19 +257,18 @@ window.APOLLO_FILMS = [
   },
   {
     slug: 'raisavanessa',
-    title: 'La Casa',
+    title: 'La Casa De Raisa Vanessa',
     client: 'Raisa Vanessa',
     category: 'Trailers',
     still: CDN + '/22edfda1-e70e-4956-9498-fd15f93c8d63/La_Casa_De_Raisa_Vanessa_Teaser_1122244675thumbnail.jpg',
-    video: REEL.serpenteTr,
-    substituteReel: true,
+    video: REEL.laCasaTr,
     credits: CREDITS.laCasa,
     cast: CAST.laCasa,
     alsoCredited: ALSO.laCasa
   },
   {
     slug: 'amoreserpente',
-    title: 'Amore Serpente',
+    title: 'Raisa Vanessa Amore Serpente',
     client: 'Raisa Vanessa',
     category: 'Trailers',
     still: CDN + '/21e85106-5b58-47f7-a56e-bc240bae2a8f/Raisa_Vanessa_-_Amore_Serpente_Trailer_1122246053thumbnail.jpg',
@@ -307,8 +308,8 @@ window.APOLLO_FILMS = [
   },
   {
     slug: 'dagi',
-    title: 'Birce Akalay',
-    client: 'DAGI',
+    title: 'DAGI',
+    client: 'DAGI × Birce Akalay',
     category: 'Brand Works',
     still: CDN + '/b9abafb1-a9bb-48b5-ad4c-6b02701ff2fd/Dagi_Islands_1122031538thumbnail.jpg',
     video: REEL.dagi
@@ -319,8 +320,7 @@ window.APOLLO_FILMS = [
     client: '',
     category: 'Brand Works',
     still: CDN + '/afa89f80-dcb6-406f-8991-5bc6cfc5fe4e/Club_Marvy_1122249863thumbnail.jpg',
-    video: REEL.penti,
-    substituteReel: true
+    video: REEL.clubMarvy
   },
   {
     slug: 'aureasomnia',
@@ -340,7 +340,7 @@ window.APOLLO_FILMS = [
   },
   {
     slug: 'leija',
-    title: 'Leija',
+    title: 'Bosphorus Gentlemen Leija',
     client: 'Bosphorus Gentlemen',
     category: 'Brand Works',
     still: CDN + '/30fb9bc4-4a00-405b-818c-fb469936ea2a/Leija_1122247732thumbnail.jpg',
@@ -348,7 +348,7 @@ window.APOLLO_FILMS = [
   },
   {
     slug: 'atelierindiana',
-    title: 'Atelier',
+    title: 'Atelier Indiana',
     client: 'Rafael Indiana',
     category: 'Short Films',
     still: CDN + '/4174783f-e53a-44b4-acb6-d96c0af3c34c/Rafael_Indiana_-_Atelier_1122255907thumbnail.jpg',
@@ -427,6 +427,6 @@ Object.keys(FILE).forEach(function (k) { REEL_TO_CUT[REEL[k]] = CUT[k]; });
 window.APOLLO_FILMS.forEach(function (f) { f.full = REEL_TO_CUT[f.video] || null; });
 
 /* The five titles carried by the homepage index, in order. */
-window.APOLLO_INDEX = ['mirage', 'drole-de-monsieur-ii-leone', 'amoreserpente2', 'koton', 'shopigo-a-summer-odyssey'];
+window.APOLLO_INDEX = ['mirage', 'drole-de-monsieur-ii-leone', 'koton', 'jack-daniels', 'drykorn-midnight-in-vienna'];
 
 window.APOLLO_CATEGORIES = ['Brand Works', 'Short Films', 'Trailers'];

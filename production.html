@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400&display=swap">
 <link rel="stylesheet" href="assets/css/apollo.css">
+<!-- Set before first paint: the entrances in apollo.css only hide their
+     elements under `.js`, so a page without script stays fully readable. -->
+<script>document.documentElement.className += ' js';</script>
 </head>
 <body>
 
@@ -30,8 +33,8 @@
 
   <section class="band band--dark">
     <div class="stack stack--lg">
-      <h1 class="display">Apollo Films ethos.</h1>
-      <div class="columns">
+      <h1 class="display" data-split data-reveal>Apollo Films ethos.</h1>
+      <div class="columns columns--sticky" data-reveal>
         <p class="label dim">Production</p>
         <div class="prose">
           <p>Inspired by the God of the Sun and Light, we bring a cinematic quality back to content. Whether
@@ -44,25 +47,64 @@
 
   <section class="band band--cream">
     <div class="stack stack--lg">
-      <div class="sectionhead">
+      <div class="sectionhead" data-reveal>
         <h2 class="h2">What we bring to set</h2>
-        <span class="label dim">Six principles</span>
+        <span class="label dim">Six principles · from the floor</span>
       </div>
-      <ol class="values">
-        <li><span class="n">01</span><span class="v">Teamwork</span></li>
-        <li><span class="n">02</span><span class="v">Art direction</span></li>
-        <li><span class="n">03</span><span class="v">Cinematic</span></li>
-        <li><span class="n">04</span><span class="v">Vision</span></li>
-        <li><span class="n">05</span><span class="v">Ambition</span></li>
-        <li><span class="n">06</span><span class="v">Aesthetics</span></li>
-      </ol>
+
+      <!-- The frames are behind-the-scenes stills. One card serves all six
+           words: it rides the cursor on a desktop, and steps through the
+           list on its own where there is no cursor to ride. -->
+      <div class="ethos" id="ethos">
+        <!-- The entrance goes on the list, not on `.ethos`: the follow-mode card
+             is `position: fixed`, and a transform on its ancestor would make it
+             position against that ancestor instead of the viewport. -->
+        <ul class="ethos__list" data-reveal="120">
+          <li class="ethos__item" data-shot="assets/backstage/cards/teamwork.webp" tabindex="0">
+            <span class="ethos__bar" aria-hidden="true"></span>
+            <span class="ethos__word">Teamwork</span>
+          </li>
+          <li class="ethos__item" data-shot="assets/backstage/cards/art-direction.webp" tabindex="0">
+            <span class="ethos__bar" aria-hidden="true"></span>
+            <span class="ethos__word">Art direction</span>
+          </li>
+          <li class="ethos__item" data-shot="assets/backstage/cards/sinematic.webp" tabindex="0">
+            <span class="ethos__bar" aria-hidden="true"></span>
+            <span class="ethos__word">Cinematic</span>
+          </li>
+          <li class="ethos__item" data-shot="assets/backstage/cards/vision.webp" tabindex="0">
+            <span class="ethos__bar" aria-hidden="true"></span>
+            <span class="ethos__word">Vision</span>
+          </li>
+          <li class="ethos__item" data-shot="assets/backstage/cards/ambition.webp" tabindex="0">
+            <span class="ethos__bar" aria-hidden="true"></span>
+            <span class="ethos__word">Ambition</span>
+          </li>
+          <li class="ethos__item" data-shot="assets/backstage/cards/aesthetics.webp" tabindex="0">
+            <span class="ethos__bar" aria-hidden="true"></span>
+            <span class="ethos__word">Aesthetics</span>
+          </li>
+        </ul>
+
+        <div class="ethos__card" data-ethos-card aria-hidden="true">
+          <div class="ethos__tilt">
+            <div class="ethos__sway">
+              <!-- The first frame ships in the markup, so the card is never an
+                   empty box: without script this section is still a still. The
+                   second layer is what the cross-fade fades into. -->
+              <img class="ethos__shot is-on" src="assets/backstage/cards/teamwork.webp" alt="" decoding="async">
+              <img class="ethos__shot" alt="" decoding="async">
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
   <section class="band band--dark">
     <div class="stack stack--lg">
-      <h2 class="display">We don't follow trends. We craft stories that are timeless.</h2>
-      <div class="columns">
+      <h2 class="display" data-split data-reveal>We don't follow trends. We craft stories that are timeless.</h2>
+      <div class="columns columns--sticky" data-reveal>
         <p class="label dim">Method</p>
         <div class="prose">
           <p>Operating as both a production company and creative studio, Apollo develops film and brand
@@ -76,7 +118,7 @@
 
   <section class="band band--cream">
     <div class="stack stack--lg">
-      <h2 class="display">Put us on set.</h2>
+      <h2 class="display" data-split data-reveal>Put us on set.</h2>
       <a class="btn" href="contact.html">Enquire</a>
     </div>
   </section>
