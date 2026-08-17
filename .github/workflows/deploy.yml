@@ -1,8 +1,15 @@
 name: Deploy to GitHub Pages
 
-# Apollo is plain static HTML — there is no build step. The job stages just the
-# files that make up the site into _site/ and publishes that, so the README, the
-# dev server and the credit source data stay in the repo but off the web.
+# Apollo is plain static HTML. The job stages just the files that make up the
+# site into _site/ and publishes that, so the README, the dev server and the
+# credit source data stay in the repo but off the web.
+#
+# The staged copy is then minified in place. Nothing in the repo is touched —
+# `python3 serve.py` still runs the readable source. What ships is stripped of
+# every comment and newline, so view-source gives a copyist the rendering but
+# not the reasoning: no notes on why a curve is what it is, no dead code, no
+# named intent. It is friction, not protection — the CSS and the DOM are still
+# fully readable to anyone who wants them.
 #
 # The site is served from a subpath of the custom domain:
 # https://umutcanceyhan.com/apollo/ — every path in the markup is relative, so
@@ -37,6 +44,32 @@ jobs:
           echo "--- staged ---"
           du -sh _site
           find _site -maxdepth 2 -type d
+
+      # esbuild minifies each file on its own — no bundling. films.js hands the
+      # catalogue to app.js over `window.APOLLO_FILMS`, and window properties
+      # survive mangling, so the two files stay independent scripts loaded in
+      # order, exactly as the markup expects.
+      - name: Minify CSS and JS
+        run: |
+          npx --yes esbuild@0.25.0 _site/assets/js/*.js \
+            --minify --legal-comments=none \
+            --outdir=_site/assets/js --allow-overwrite --log-level=warning
+          npx --yes esbuild@0.25.0 _site/assets/css/*.css \
+            --minify --legal-comments=none \
+            --outdir=_site/assets/css --allow-overwrite --log-level=warning
+
+      # Collapses the markup and strips comments. The pages carry no <style>
+      # blocks and one two-line inline script; minify-js/css cover those.
+      - name: Minify HTML
+        run: |
+          npx --yes html-minifier-terser@7.2.0 \
+            --input-dir _site --output-dir _site --file-ext html \
+            --collapse-whitespace --remove-comments \
+            --remove-redundant-attributes \
+            --minify-js true --minify-css true
+          echo "--- minified ---"
+          du -sh _site/assets/css _site/assets/js
+          ls -l _site/*.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
