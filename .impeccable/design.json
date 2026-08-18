@@ -1,0 +1,336 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-18T00:00:00Z",
+  "title": "Design System: Apollo Films",
+  "extensions": {
+    "colorMeta": {
+      "celluloid-cream": {
+        "role": "primary",
+        "displayName": "Celluloid Cream",
+        "canonical": "oklch(91.3% 0.063 99.6)",
+        "tonalRamp": [
+          "oklch(15% 0.0252 99.6)",
+          "oklch(26% 0.0404 99.6)",
+          "oklch(37% 0.0525 99.6)",
+          "oklch(48% 0.0607 99.6)",
+          "oklch(59% 0.062 99.6)",
+          "oklch(70% 0.0551 99.6)",
+          "oklch(82% 0.0428 99.6)",
+          "oklch(95% 0.0252 99.6)"
+        ]
+      },
+      "projection-black": {
+        "role": "neutral",
+        "displayName": "Projection Black",
+        "canonical": "oklch(12% 0.008 99.6)",
+        "tonalRamp": [
+          "oklch(15% 0.0048 99.6)",
+          "oklch(26% 0.0077 99.6)",
+          "oklch(37% 0.01 99.6)",
+          "oklch(48% 0.0116 99.6)",
+          "oklch(59% 0.0118 99.6)",
+          "oklch(70% 0.0105 99.6)",
+          "oklch(82% 0.0082 99.6)",
+          "oklch(95% 0.0048 99.6)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The branded moment. Footer mark and film-page titles. One per page, never two."
+      },
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page headings and the closing call. Balanced wrap."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section heads within a band."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Fact values, credit names, form field text."
+      },
+      "subhead": {
+        "displayName": "Subhead",
+        "purpose": "Credit names and the bullet-separated name list. Anything that is a name rather than a heading. The step the scale was missing."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "The single sentence under a display heading. Held to 34ch."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose only, and prose appears on one page. Held to 58ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "All metadata: category, client, credit role, footer facts, form labels."
+      }
+    },
+    "opacityLadder": [
+      {
+        "value": 0.26,
+        "purpose": "A catalogue row demoted by the pointerless focus state."
+      },
+      {
+        "value": 0.34,
+        "purpose": "An inactive phone index entry."
+      },
+      {
+        "value": 0.38,
+        "purpose": "The hero reel, running under 88px titles."
+      },
+      {
+        "value": 0.45,
+        "purpose": "The showcase reel, and every bullet separator."
+      },
+      {
+        "value": 0.5,
+        "purpose": "A resting catalogue row, a resting filter."
+      },
+      {
+        "value": 0.55,
+        "purpose": "A nav item, a credit role, a footer link."
+      },
+      {
+        "value": 0.62,
+        "purpose": "Dimmed metadata. The .dim and .muted classes."
+      },
+      {
+        "value": 0.85,
+        "purpose": "A button at rest, an input at rest."
+      },
+      {
+        "value": 1,
+        "purpose": "Active, hovered, or committed."
+      }
+    ],
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-entrance",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Entrances. Display words rising out of their own baseline, the phone index hairline drawing in."
+      },
+      {
+        "name": "ease-element",
+        "value": "cubic-bezier(0.2, 0.7, 0.2, 1)",
+        "purpose": "Element motion. Reveal translate, the ethos word stepping aside, the link arrow leaning."
+      },
+      {
+        "name": "ease-commit",
+        "value": "cubic-bezier(0.22, 0.61, 0.36, 1)",
+        "purpose": "The commit. A catalogue row's hairline redrawing and its cue opening when the scroll comes to rest."
+      },
+      {
+        "name": "duration-state",
+        "value": "0.18s",
+        "purpose": "Opacity state changes: nav, rows, buttons, links, filters."
+      },
+      {
+        "name": "duration-media",
+        "value": "0.55s to 0.7s",
+        "purpose": "Reel cross-fades between films."
+      },
+      {
+        "name": "duration-entrance",
+        "value": "0.85s to 1s",
+        "purpose": "Arrival: fade and rise, hairline draw, word split."
+      },
+      {
+        "name": "duration-dissolve",
+        "value": "1.4s",
+        "purpose": "The pointerless reel scale-out, so a change of film reads as a dissolve rather than a swap."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "row-drop-client",
+        "value": "1100px"
+      },
+      {
+        "name": "sticky-columns",
+        "value": "900px"
+      },
+      {
+        "name": "ethos-follow-mode",
+        "value": "860px"
+      },
+      {
+        "name": "mobile",
+        "value": "780px"
+      },
+      {
+        "name": "short-phone",
+        "value": "780px and max-height 660px"
+      },
+      {
+        "name": "display-line-wrap",
+        "value": "560px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "The system's only action pattern: a 1px outline, never a fill. Ends where the words end.",
+      "html": "<button class=\"ds-btn\">Start a project</button>",
+      "css": ".ds-btn { all: unset; cursor: pointer; display: inline-block; width: fit-content; padding: 12px 21px; border: 1px solid currentColor; font-family: 'Space Grotesk', Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; color: oklch(91.3% 0.063 99.6); background: oklch(12% 0.008 99.6); opacity: 0.85; transition: opacity 0.18s ease; } .ds-btn:hover { opacity: 1; } .ds-btn:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }"
+    },
+    {
+      "name": "Arrow Link",
+      "kind": "custom",
+      "refersTo": "link",
+      "description": "The alternative to a button. The arrow leans the way it points.",
+      "html": "<a class=\"ds-link\" href=\"#\">Full archive <span aria-hidden=\"true\">&#8594;</span></a>",
+      "css": ".ds-link { display: inline-flex; align-items: baseline; gap: 10px; width: fit-content; font-family: 'Space Grotesk', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; text-decoration: none; color: oklch(91.3% 0.063 99.6); opacity: 0.62; transition: opacity 0.18s ease; } .ds-link:hover { opacity: 1; } .ds-link span { display: inline-block; transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1); } .ds-link:hover span { transform: translateX(5px); }"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "No box. One bottom hairline, and the answer set larger than its own question.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field__label\" for=\"ds-subject\">Subject (required)</label><input class=\"ds-field__input\" id=\"ds-subject\" type=\"text\" value=\"Feature film, Q1\"></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 12px; } .ds-field__label { font-family: 'Space Grotesk', Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; color: oklch(91.3% 0.063 99.6); opacity: 0.62; } .ds-field__input { font-family: 'Space Grotesk', Helvetica, Arial, sans-serif; font-size: clamp(20px, 2.2vw, 28px); font-weight: 400; line-height: 1.3; letter-spacing: -0.04em; color: oklch(91.3% 0.063 99.6); background: transparent; border: 0; border-bottom: 1px solid oklch(91.3% 0.063 99.6); border-radius: 0; padding: 6px 0 10px; opacity: 0.85; transition: opacity 0.18s ease; } .ds-field__input:focus { outline: none; opacity: 1; }"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Bullet-separated, never ruled, never underlined. The current page is the bright one.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\">Showcase</a><a href=\"#\">Production</a><a href=\"#\" aria-current=\"page\">About</a><a href=\"#\">Contact</a></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; background: oklch(12% 0.008 99.6); } .ds-nav a { padding: 0 21px; font-family: 'Space Grotesk', Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; text-decoration: none; color: oklch(91.3% 0.063 99.6); opacity: 0.55; transition: opacity 0.18s ease; } .ds-nav a:hover, .ds-nav a[aria-current=\"page\"] { opacity: 1; } .ds-nav a:not(:last-child)::after { content: \"\\2022\"; margin-left: 21px; opacity: 0.45; } .ds-nav a:last-child { padding-right: 0; } .ds-nav a:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }"
+    },
+    {
+      "name": "Filter",
+      "kind": "chip",
+      "refersTo": "filter-chip",
+      "description": "A chip with no chip: text only, bullet-separated, pressed state carried by opacity. Closes on one hairline.",
+      "html": "<div class=\"ds-filters\"><button class=\"ds-filter\" aria-pressed=\"true\">All</button><button class=\"ds-filter\" aria-pressed=\"false\">Short Films</button><button class=\"ds-filter\" aria-pressed=\"false\">Fashion</button><button class=\"ds-filter\" aria-pressed=\"false\">Trailers</button><span class=\"ds-filters__count\">24 films</span></div>",
+      "css": ".ds-filters { display: flex; flex-wrap: wrap; align-items: baseline; padding-bottom: 18px; border-bottom: 1px solid oklch(91.3% 0.063 99.6); background: oklch(12% 0.008 99.6); } .ds-filter { all: unset; cursor: pointer; padding: 0 21px 0 0; font-family: 'Space Grotesk', Helvetica, Arial, sans-serif; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: oklch(91.3% 0.063 99.6); opacity: 0.5; transition: opacity 0.18s ease; } .ds-filter::after { content: \"\\2022\"; margin-left: 21px; opacity: 0.45; } .ds-filter:last-of-type::after { content: none; } .ds-filter:hover, .ds-filter[aria-pressed=\"true\"] { opacity: 1; } .ds-filter:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; } .ds-filters__count { margin-left: auto; font-family: 'Space Grotesk', Helvetica, Arial, sans-serif; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: oklch(91.3% 0.063 99.6); opacity: 0.62; }"
+    },
+    {
+      "name": "Catalogue Row",
+      "kind": "custom",
+      "refersTo": "catalogue-row",
+      "description": "The archive's whole interface. A film keeps its number wherever you meet it, under every filter.",
+      "html": "<ul class=\"ds-cat\"><li><a class=\"ds-row\" href=\"#\"><span class=\"ds-row__n\">07</span><span class=\"ds-row__t\">Blue Voyage</span><span class=\"ds-row__c\">Koton</span><span class=\"ds-row__k\">Fashion</span></a></li><li><a class=\"ds-row ds-row--on\" href=\"#\"><span class=\"ds-row__n\">08</span><span class=\"ds-row__t\">Mirage</span><span class=\"ds-row__c\">Rafael Indiana</span><span class=\"ds-row__k\">Short Films</span></a></li></ul>",
+      "css": ".ds-cat { list-style: none; margin: 0; padding: 0; background: oklch(12% 0.008 99.6); } .ds-cat > li { border-top: 1px solid oklch(91.3% 0.063 99.6); } .ds-cat > li:last-child { border-bottom: 1px solid oklch(91.3% 0.063 99.6); } .ds-row { display: grid; grid-template-columns: minmax(84px, 12vw) minmax(0, 1fr) minmax(0, 22ch) 14ch; align-items: baseline; gap: 0 24px; padding: 18px 0 22px; text-decoration: none; color: oklch(91.3% 0.063 99.6); font-family: 'Space Grotesk', Helvetica, Arial, sans-serif; font-weight: 400; opacity: 0.5; transition: opacity 0.2s ease; } .ds-row:hover, .ds-row--on { opacity: 1; } .ds-row__n { font-size: clamp(38px, 7vw, 110px); line-height: 0.8; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; } .ds-row__t { font-size: clamp(24px, 3.4vw, 52px); line-height: 0.95; letter-spacing: -0.04em; } .ds-row__c, .ds-row__k { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; } .ds-row__k { text-align: right; }"
+    },
+    {
+      "name": "Ethos Frame",
+      "kind": "card",
+      "refersTo": null,
+      "description": "The only framed object in the system. A hairline frame with no fill, no radius, no shadow. Depth is rotation.",
+      "html": "<div class=\"ds-frame\"><div class=\"ds-frame__sway\"><div class=\"ds-frame__shot\"></div></div></div>",
+      "css": ".ds-frame { width: 320px; aspect-ratio: 3 / 2; perspective: 900px; } .ds-frame__sway { position: relative; width: 100%; height: 100%; overflow: hidden; border: 1px solid oklch(91.3% 0.063 99.6); border-radius: 0; animation: ds-sway 8s ease-in-out infinite; } .ds-frame__shot { position: absolute; inset: 0; background: linear-gradient(135deg, oklch(37% 0.0525 99.6), oklch(59% 0.062 99.6)); animation: ds-drift 14s ease-in-out infinite alternate; } @keyframes ds-sway { 0%, 100% { transform: rotateY(-7deg) rotateX(1.6deg); } 50% { transform: rotateY(7deg) rotateX(-1.6deg); } } @keyframes ds-drift { from { transform: scale(1.08) translate3d(-1.2%, -0.8%, 0); } to { transform: scale(1.15) translate3d(1.2%, 0.8%, 0); } } @media (prefers-reduced-motion: reduce) { .ds-frame__sway, .ds-frame__shot { animation: none; } }"
+    },
+    {
+      "name": "Now Playing Cue",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "How a row says it holds the reel when there is no pointer. Holds zero height until the commit.",
+      "html": "<span class=\"ds-cue\"><span class=\"ds-cue__dot\"></span>Now playing</span>",
+      "css": ".ds-cue { display: inline-flex; align-items: center; gap: 8px; font-family: 'Space Grotesk', Helvetica, Arial, sans-serif; font-size: 10px; line-height: 1; letter-spacing: 0.2em; text-transform: uppercase; color: oklch(91.3% 0.063 99.6); opacity: 0.8; } .ds-cue__dot { width: 6px; height: 6px; border-radius: 50%; background: oklch(91.3% 0.063 99.6); animation: ds-pulse 2.6s ease-in-out infinite; } @keyframes ds-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } } @media (prefers-reduced-motion: reduce) { .ds-cue__dot { animation: none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Projection Room",
+    "overview": "Everything here is dark, and the only light in the room comes off the screen. The interface is the room: two grounds, one ink, one typeface at one weight. The films are the light. That division is absolute and it is the source of every other rule in this document. When a new element is proposed, the first question is not whether it is well-designed but whether it dims the projection.\n\nThe consequence is a system with almost no vocabulary. There is no third colour, no second font weight, no radius, no shadow, no fill. What remains is scale, tracking, opacity, and a 1px hairline. Those four are asked to do everything: rank a 24 film catalogue, separate a form field from its label, distinguish a hovered row from a committed one, carry a wordmark at 280px and a filter at 13px in the same viewport. The constraint is not minimalism for taste. It is that a system with more vocabulary would compete with the footage, and the footage is the work.\n\nThis system explicitly rejects the template film-studio portfolio, the agency SaaS aesthetic, the infinite masonry reel wall, and the heavy motion showreel site. The first is the most dangerous, because it is what a film studio site is expected to look like and drift returns there by default.",
+    "keyCharacteristics": [
+      "Two grounds alternating down every page: projection black and celluloid cream. The cut between them is the rhythm.",
+      "One typeface, Space Grotesk, at weight 400 only. No bold appears anywhere.",
+      "Hierarchy from scale and tracking, never from weight.",
+      "A nine step opacity ladder, not a colour scale, carries rank.",
+      "1px hairline as the only border, the only divider, and the only button.",
+      "Full-bleed. No max-width container, nothing centered.",
+      "All chroma comes from the footage."
+    ],
+    "rules": [
+      {
+        "name": "The Two Grounds Rule",
+        "body": "There are exactly two surfaces a section can land on: black or cream. A third ground is forbidden. 601 Inc.'s Darkroom Shadow (#4f4d3c) exists in the source system and is deliberately unused here, because in that system it is haze around a still, not a band you can stand on. Introduced as a band, it reads as a third colour and the black-to-cream cut stops being the rhythm.",
+        "section": "colors"
+      },
+      {
+        "name": "The Opacity Ladder Rule",
+        "body": "Rank is opacity, never colour. The ladder is fixed: 0.26, 0.34, 0.38, 0.45, 0.5, 0.55, 0.62, 0.85, 1. A new element takes a rung; it does not invent one.",
+        "section": "colors"
+      },
+      {
+        "name": "The Footage Rule",
+        "body": "Every colour on this site that is not cream or black comes from a film. Reels run at partial opacity so cream type stays legible over them, and the black beneath the reel is the only scrim the palette permits. A gradient scrim is mixed from --black, never from a colour of its own.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Weight Rule",
+        "body": "font-weight: 400 everywhere, including h1 through h4, strong, and b, which are explicitly reset. No bold appears anywhere on this site. A design that needs a heavier weight to establish rank has not finished designing the scale. 601 Inc. specifies weight 400 across every role, A24 caps at 500. It is the one rule they share, and it is not negotiable here.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tracking Follows Size Rule",
+        "body": "Tracking is a function of size, not a constant. Four tiers by size band: -0.04em at 100px and up, -0.03em from 40 to 100px, -0.02em from 22 to 40px, -0.01em from 17 to 22px. Body sits at 0, because negative tracking at 16px closes the counters. Uppercase labels remain +0.16em.",
+        "section": "typography"
+      },
+      {
+        "name": "The Headroom Rule",
+        "body": "Every clamp ceiling lands past 1650px, never at 1300. A scale whose ceilings are reached at 1273px puts an ordinary laptop at the system's maximum with no headroom left, and the result reads as shouting rather than as large. When adding a role, check where its ceiling is reached before checking how it looks.",
+        "section": "typography"
+      },
+      {
+        "name": "The Broken Floor Rule",
+        "body": "601 Inc. forbids text under 42px. This system breaks that rule on purpose and only there: .label at 12px and .fine at 15px exist because a 24 film catalogue needs categories, clients, and filters that do not shout. Those two sizes are load-bearing and cannot be removed, and they cannot get smaller.",
+        "section": "typography"
+      },
+      {
+        "name": "The Opacity Is Rank Rule",
+        "body": "The nine step ladder is the z-axis. An element being in front is said with brightness, not with a shadow under it.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Rotation, Not Glow Rule",
+        "body": "The one component with genuine volume, the ethos card, gets it from rotation: perspective 900px, an idle sway of plus or minus 7deg on Y, a pointer tilt, and a still drifting from scale 1.08 to 1.15. A card's volume is stated by turning it over, never by putting a shadow beneath it.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Layer Is Pinning Rule",
+        "body": "Stacking is a scroll behaviour, not a shadow. The reel stage is sticky and the list rides over it, pulled up by a negative margin equal to the stage height. Depth here is something the reader produces rather than something the page draws.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Hairline Is The Only Border Rule",
+        "body": "1px solid currentColor is the sole separating device. There is no second thickness, no fill, and no box. A border is a line, never a surface.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do land every section on one of the two grounds, black or cream, and close every page on a cream band before the black footer.",
+      "Do take a rung on the opacity ladder (0.26 / 0.34 / 0.38 / 0.45 / 0.5 / 0.55 / 0.62 / 0.85 / 1) for any new state. Do not invent a rung.",
+      "Do set everything at font-weight 400, and build hierarchy from scale and tracking.",
+      "Do check where a new role's clamp ceiling is reached before checking how it looks. Ceilings land past 1650px, never at 1300.",
+      "Do use 1px solid currentColor as the only border, divider, frame, and button.",
+      "Do ease with the system's own curves: cubic-bezier(0.16, 1, 0.3, 1) for entrances, cubic-bezier(0.2, 0.7, 0.2, 1) for element motion, cubic-bezier(0.22, 0.61, 0.36, 1) for the commit. All are ease-out. None overshoot.",
+      "Do keep state transitions at 0.18s, media cross-fades at 0.55s to 0.7s, and entrances at 0.85s to 1s.",
+      "Do write both a plain sRGB hex and the canonical OKLCH for any new colour, hex first. There is no build step, so there is no autoprefixer to write the fallback.",
+      "Do keep every entrance gated on the .js class, so a page without script is fully readable rather than blank.",
+      "Do switch looping animations off outright under prefers-reduced-motion, not merely down to 0.01ms."
+    ],
+    "donts": [
+      "Don't build a template portfolio: centered headings, an even grid of equal thumbnails, Our Work / Our Team / Our Process sections, a stock hero with a play button. This is the most likely drift and it is named in PRODUCT.md as the primary anti-reference.",
+      "Don't reach for the agency SaaS aesthetic: gradients, rounded cards, drop shadows, glassmorphism, hero-metric blocks, or icon-heading-paragraph card grids.",
+      "Don't pour the archive into an infinite masonry reel wall with every item weighted equally and ordered by upload date.",
+      "Don't build a heavy motion showreel site: WebGL transitions, cursor trails, custom scroll hijacking, or a loading animation before the first frame. If a visitor notices the transition, the transition failed.",
+      "Don't introduce a third ground colour, including 601 Inc.'s Darkroom Shadow (#4f4d3c).",
+      "Don't add a second font weight, a second typeface, or a bold anywhere.",
+      "Don't use border-left or border-right above 1px as a coloured accent stripe.",
+      "Don't centre anything. Everything anchors to the left, or to the viewport edges.",
+      "Don't wrap content in a max-width container. The system is full-bleed; only prose (58ch), lede (34ch), and the form (620px) carry a measure.",
+      "Don't shrink .label (12px) or .fine (15px) any further. They are the deliberate break from 601's 42px floor and they are already the accessibility floor.",
+      "Don't put type over a reel without checking contrast on a bright frame. Cream on black is 15.8:1, but over footage at 0.38 to 0.45 opacity the ratio is frame-dependent, and it is this system's most likely WCAG 2.2 AA failure."
+    ]
+  }
+}
