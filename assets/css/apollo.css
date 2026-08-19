@@ -97,7 +97,7 @@
 
   /* The reel runs under type, so its strength is a contrast decision and
      it belongs to the mode. See the light block for why these go up. */
-  --reel-hero: 0.38;
+  --reel-hero: 0.9;
   --reel-cat: 0.45;
   --reel-phone: 0.66;
 
@@ -184,7 +184,7 @@
   --o-dim: 0.66;
   --o-hold: 0.85;
 
-  --reel-hero: 0.62;
+  --reel-hero: 0.9;
   --reel-cat: 0.62;
   --reel-phone: 0.72;
 }
