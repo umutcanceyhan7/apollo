@@ -4,6 +4,7 @@ description: A projection room in a browser. Two grounds, one ink, one weight; a
 colors:
   celluloid-cream: "oklch(91.3% 0.063 99.6)"
   projection-black: "oklch(12% 0.008 99.6)"
+  bleached-paper: "oklch(95.4% 0.014 99.6)"
 typography:
   wordmark:
     fontFamily: "Space Grotesk, Helvetica Neue, Helvetica, Arial, sans-serif"
@@ -106,6 +107,27 @@ the light. That division is absolute and it is the source of every other rule in
 document. When a new element is proposed, the first question is not whether it is
 well-designed but whether it dims the projection.
 
+**The second room: "The Contact Sheet"**
+
+The site ships a light mode, and it is the same room with the house lights up rather
+than an inverted copy of the dark one. The floor becomes bleached paper, projection
+black becomes the ink on it, and celluloid cream goes out entirely: cream is the light
+coming off a screen, and there is no screen glow in a lit room. 601 Inc.'s own site
+does exactly this, dropping its `--col-yellow: #ece4b4` for light and running neutrals
+instead, and the reason here is this document's first principle rather than a
+preference. A cream that covered a whole page would make the interface the largest
+colour on screen, and the footage is meant to be the only chroma there is.
+
+So the footage stops being projected and starts being printed. That is the whole
+concept of the mode, and it is what licenses the one thing light mode changes beyond
+the four role tokens: the reels come up, because a print is meant to be looked at.
+
+Dark is the default and it is the absence of `data-theme`, not a value of it. The site
+does not follow `prefers-color-scheme`: the projection room is the studio's first
+impression and a visitor arrives in it either way. Choosing light is a decision, and
+`localStorage['apollo-theme']` remembers it. The restore runs in the head before first
+paint, in the same inline script that sets `.js`.
+
 The consequence is a system with almost no vocabulary. There is no third colour, no
 second font weight, no radius, no shadow, no fill. What remains is scale, tracking,
 opacity, and a 1px hairline. Those four are asked to do everything: rank a 24 film
@@ -123,8 +145,11 @@ returns there by default.
 
 **Key Characteristics:**
 
-- Two grounds alternating down every page: projection black and celluloid cream. The cut
-  between them is the rhythm.
+- Two grounds alternating down every page. In dark: projection black and celluloid
+  cream. In light: bleached paper and projection black. The cut between them is the
+  rhythm, and it inverts rather than softening.
+- Three colours across both modes, never more than two at once. Projection black is the
+  only one both modes use.
 - One typeface, Space Grotesk, at weight 400 only. No bold appears anywhere.
 - Hierarchy from scale and tracking, never from weight.
 - A nine step opacity ladder, not a colour scale, carries rank.
@@ -147,11 +172,31 @@ state, and emphasis are all expressed as opacity of the single ink.
 
 ### Neutral
 
-- **Projection Black** (`oklch(12% 0.008 99.6)`, sRGB `#060603`): the floor beneath
-  everything, the masthead, the footer, and every video stage. Not `#000`. It carries the
-  cream's own hue at the lowest chroma that survives 8-bit quantisation, so the two
-  grounds belong to one light rather than to a colour and an absence. To the eye it is
-  black; to the system it is the same light as the ink.
+- **Projection Black** (`oklch(12% 0.008 99.6)`, sRGB `#060603`): in dark, the floor
+  beneath everything, the masthead, the footer, and every video stage. In light, the
+  ink and the alternating band. Not `#000`. It carries the cream's own hue at the lowest
+  chroma that survives 8-bit quantisation, so nothing in the system is a colour beside
+  an absence. To the eye it is black; to the system it is the same light as the ink.
+- **Bleached Paper** (`oklch(95.4% 0.014 99.6)`, sRGB `#f2f0e6`): the light mode's floor,
+  and its ink on the alternating black band. Same hue 99.6, at 0.014 chroma against the
+  cream's 0.063. The value is argued entirely from that number: it has to read as the
+  same light as everything else, and it covers a whole page, so it cannot out-colour the
+  footage the way a page-wide cream would. 17.8:1 against projection black.
+
+### Role tokens
+
+No component names a colour. Four tokens carry every surface, and swapping them is the
+entire light mode:
+
+| token | dark | light |
+|---|---|---|
+| `--ground` | projection black | bleached paper |
+| `--ink` | celluloid cream | projection black |
+| `--ground-alt` (`.band--cream`) | celluloid cream | projection black |
+| `--ink-alt` | projection black | bleached paper |
+
+`--ground-rgb` / `--ink-rgb` carry the same two as channel lists, for the one place a
+ground is needed at partial alpha (the phone hero's scrim).
 
 ### Named Rules
 
@@ -161,18 +206,68 @@ source system and is deliberately unused here, because in that system it is haze
 a still, not a band you can stand on. Introduced as a band, it reads as a third colour and
 the black-to-cream cut stops being the rhythm.
 
-**The Opacity Ladder Rule.** Rank is opacity, never colour. The ladder is fixed:
-`0.26` (a catalogue row demoted by the focus state), `0.34` (an inactive phone index
-entry), `0.38` (the hero reel under 88px titles), `0.45` (the showcase reel, and the
-bullet separators), `0.5` (a resting catalogue row, a filter), `0.55` (a nav item, a
-credit role), `0.62` (dimmed metadata, the `.dim` class), `0.85` (a button at rest, an
-input at rest), `1` (active, hovered, committed). A new element takes a rung; it does not
-invent one.
+**The Opacity Ladder Rule.** Rank is opacity, never colour. Every rung is a token, and
+each mode cuts its own values. A new element takes a rung; it does not invent one, and
+it never writes a bare number.
 
-**The Footage Rule.** Every colour on this site that is not cream or black comes from a
-film. Reels run at partial opacity so cream type stays legible over them, and the black
-beneath the reel is the only scrim the palette permits. A gradient scrim is mixed from
-`--black`, never from a colour of its own.
+| token | role | dark | light |
+|---|---|---|---|
+| `--o-ghost` | a row demoted by the focus state | `0.26` | `0.3` |
+| `--o-idle` | an inactive phone index entry | `0.34` | `0.38` |
+| `--o-quiet` | bullet separators, the hero index at rest | `0.45` | `0.5` |
+| `--o-rest` | a resting catalogue row, a filter | `0.5` | `0.55` |
+| `--o-nav` | a nav item, a credit role | `0.55` | `0.6` |
+| `--o-dim` | dimmed metadata, the `.dim` class | `0.62` | `0.66` |
+| `--o-hold` | a button at rest, an input at rest | `0.85` | `0.85` |
+| — | active, hovered, committed | `1` | `1` |
+
+**The Ladder Does Not Invert Rule.** Light ink on a dark ground holds its contrast far
+better than dark ink on a light one: cream at `0.5` on black is 4.4:1, black at `0.5` on
+paper is 3.7:1. Each light rung above is the alpha that restores the ratio its dark
+counterpart had. The top two are deliberately not lowered, even though black on paper at
+full is 17.8:1 against cream on black's 15.8:1 — that extra hardness is the only
+compensation this system has for the weight it refuses to add. 601 Inc. answers the same
+problem by shipping a heavier weight in light mode
+(`[data-theme=light]{font-weight:500}`). One weight is the rule both source systems
+share, so the ink carries it here instead.
+
+**The Footage Rule.** Every colour on this site that is not cream, black, or paper comes
+from a film. Reels run at partial opacity so type stays legible over them, and the ground
+beneath the reel is the only scrim the palette permits. A gradient scrim is built from
+`--ground-rgb`, never from a colour of its own.
+
+**The Reel Is Dimmed In One Mode And Printed In The Other.** Dark dims the footage with
+plain opacity over black. Light must not: fading a frame toward paper lifts its blacks
+*and* caps its whites, so the picture can never reach the ground around it. Measured
+against the real footage, opacity `0.55` put the darkest pixels at `0.181` and the
+brightest at `0.673` — a frame topping out a third short of the paper beside it, which
+the eye reads as a grey scrim laid over the film. It is the single thing that made this
+mode look cheap, and it is not fixable by choosing a different alpha.
+
+Light mode multiplies instead, which is what ink on paper does: a bright source leaves
+the paper alone rather than being pulled down toward a fixed ceiling, so the frame keeps
+the range it was shot with. On the same clip the wash spanned `0.181` to `0.673`, a ratio
+of 3.7; multiply spans `0.131` to `0.606`, a ratio of 4.6. The blacks come back up with
+alpha rather than with washing.
+
+- `mix-blend-mode: multiply` goes on `.hero__stage` / `.catalogue__stage`, which give up
+  their own fill so the band behind them is the paper being printed onto. **Never put the
+  blend on the video elements**: two reels cross-fading would each multiply through the
+  overlap and the cut would dip dark in the middle.
+- **Nothing grades the footage.** A `brightness`/`contrast` filter on the media was tried
+  and removed. It did lift a dim clip's highlights to `0.869`, but it is the studio
+  deciding how its own films should look, which is not this system's call to make. The
+  frame that was shot is the frame that prints, and a dim film prints dim.
+
+| token | dark (opacity over black) | light (multiply over paper) |
+|---|---|---|
+| `--reel-hero` | `0.38` | `0.62` |
+| `--reel-cat` | `0.45` | `0.62` |
+| `--reel-phone` | `0.66` | `0.72` |
+
+With no grade, alpha is the mode's entire contrast budget. At `0.62` a resting catalogue
+row holds 2.29:1, against the dark mode's own floor of 2.17:1. Lowering a reel raises
+that number and lifts the picture toward the paper; that trade is the only lever here.
 
 ## 3. Typography
 
@@ -326,6 +421,23 @@ not a card, and it is the only one.
   the opacity ladder.
 - **Checkbox:** `15px` square with `accent-color` set to cream.
 
+### Theme switch
+
+One control, in the masthead, last in the end group. A 19px disc with one half inked:
+the hairline half is the light ground, the inked half is the dark one, and it makes a
+half turn on the system's commit curve (`0.22, 0.61, 0.36, 1`, `0.7s`) when the mode
+flips. It is the only mark on the site that carries a fill, and it earns the exception
+by being the one control whose job is to show both grounds at once.
+
+It is not a sun and not a moon. A hairline sun was built first and failed the only test
+that applies at 19px in a corner: nobody read it as a mode control.
+
+State lives on `<html data-theme>` and is announced through a rewritten `aria-label` /
+`title` naming the destination, not through `aria-pressed` — the button describes an
+action, so a pressed state would contradict it. On mobile it stays in the bar beside
+`Menu` and never folds into the nav panel: a reader in the wrong room should not have to
+open a navigation menu to leave it.
+
 ### Navigation
 
 - **Style:** 15px, `+0.16em`, uppercase, opacity `0.55`, separated by a `•` glyph at
@@ -357,11 +469,17 @@ The archive's whole interface, and the component that refuses the masonry wall.
 
 ### Do:
 
-- **Do** land every section on one of the two grounds, black (`oklch(12% 0.008 99.6)`) or
-  cream (`oklch(91.3% 0.063 99.6)`), and close every page on a cream band before the black
-  footer.
-- **Do** take a rung on the opacity ladder (`0.26 / 0.34 / 0.38 / 0.45 / 0.5 / 0.55 / 0.62
-  / 0.85 / 1`) for any new state. Do not invent a rung.
+- **Do** land every section on `.band--dark` or `.band--cream`, and close every page on a
+  `.band--cream` before the footer. The class names describe the dark mode; what they
+  resolve to is `--ground` and `--ground-alt`, which is what carries the rhythm into
+  light.
+- **Do** reach for a role token (`--ground`, `--ink`, `--ground-alt`, `--ink-alt`) or
+  `currentColor`. A component that names `--cream` or `--black` directly is a component
+  that only works in one mode. There is exactly one deliberate exception, `.player`,
+  because you do not project onto paper.
+- **Do** take a rung on the opacity ladder (`--o-ghost` through `--o-hold`) for any new
+  state, as a token rather than a number. Do not invent a rung, and do not hard-code an
+  alpha that a mode would need to re-cut.
 - **Do** set everything at `font-weight: 400`, and build hierarchy from scale and tracking.
 - **Do** use `1px solid currentColor` as the only border, divider, frame, and button.
 - **Do** ease with the system's own curves: `cubic-bezier(0.16, 1, 0.3, 1)` for entrances,
@@ -392,8 +510,14 @@ The archive's whole interface, and the component that refuses the masonry wall.
 - **Don't** build a **heavy motion showreel site**: WebGL transitions, cursor trails,
   custom scroll hijacking, or a loading animation before the first frame. If a visitor
   notices the transition, the transition failed.
-- **Don't** introduce a third ground colour, including 601 Inc.'s Darkroom Shadow
-  (`#4f4d3c`). As a band it reads as a third colour and softens the cut.
+- **Don't** introduce a third ground colour *within a mode*, including 601 Inc.'s
+  Darkroom Shadow (`#4f4d3c`). Each mode has exactly two grounds. As a band a third reads
+  as a third colour and softens the cut.
+- **Don't** carry celluloid cream into light mode. It is the dark mode's light, and a
+  page-wide cream would make the interface the largest colour on screen.
+- **Don't** add a heavier weight in light mode to recover the density dark-on-light
+  loses. That is 601's answer and it is the one rule this system will not spend. The ink
+  runs at full strength instead.
 - **Don't** add a second font weight, a second typeface, or a bold anywhere.
 - **Don't** use `border-left` or `border-right` above 1px as a coloured accent stripe.
 - **Don't** centre anything. Everything anchors to the left, or to the viewport edges.
@@ -401,6 +525,13 @@ The archive's whole interface, and the component that refuses the masonry wall.
   (`58ch`), lede (`34ch`), and the form (`620px`) carry a measure.
 - **Don't** shrink `.label` (12px) or `.fine` (15px) any further. They are the deliberate
   break from 601's 42px floor and they are already the accessibility floor.
-- **Don't** put type over a reel without checking contrast on a bright frame. Cream on
-  black is 15.8:1, but over footage at `0.38` to `0.45` opacity the ratio is
-  frame-dependent, and it is this system's most likely WCAG 2.2 AA failure.
+- **Don't** put type over a reel without checking contrast on both a bright frame and a
+  dark one. Cream on black is 15.8:1 and black on paper is 17.8:1, but over footage the
+  ratio is frame-dependent and each mode fails on the opposite extreme. This is the
+  system's most likely WCAG 2.2 AA failure in both rooms.
+- **Don't** dim a light-mode reel with plain opacity. It compresses the frame's range and
+  reads as a grey scrim. Multiply at the stage instead.
+- **Don't** put a `filter` grade on the reels to rescue a dim film. Reach for the reel's
+  alpha, or regrade the source.
+- **Don't** move the blend onto the video elements. Cross-fading reels would double-
+  multiply through the overlap and every cut would dip dark.

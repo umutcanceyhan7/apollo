@@ -130,8 +130,10 @@ Already in place and to be preserved:
 Standing risk areas, to be checked on any change:
 
 - **Contrast over moving footage.** Cream on projection black is far above AA, but the
-  hero and showcase run type over video at 38 to 45 percent opacity. Contrast there is
-  frame-dependent and is the site's most likely AA failure.
+  hero and showcase run type over video at partial opacity. Contrast there is
+  frame-dependent and is the site's most likely AA failure — in both modes, and on
+  opposite frames: dark mode loses on a bright frame, light mode on a dark one. Reel
+  strengths are set per mode against that worst case and are documented in DESIGN.md.
 - **Small tracked type.** `.label` at 12px and `.fine` at 15px are the deliberate break
   from 601's 42px floor. They are load-bearing for a 24 film catalogue and cannot be
   removed, so they must stay legible rather than get smaller.

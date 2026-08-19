@@ -10,9 +10,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400&display=swap">
 <link rel="stylesheet" href="assets/css/apollo.css">
-<!-- Set before first paint: the entrances in apollo.css only hide their
-     elements under `.js`, so a page without script stays fully readable. -->
-<script>document.documentElement.className += ' js';</script>
+<meta name="theme-color" content="#060603">
+<!-- Set before first paint. The entrances in apollo.css only hide their
+     elements under `.js`, so a page without script stays fully readable —
+     and the mode is restored in the same breath, because read any later it
+     shows as a whole-page flash from the projection room to the contact
+     sheet. Dark is the site's default, so it is the absence of the
+     attribute and only light is ever written. -->
+<script>(function(d){d.className+=' js';try{if(localStorage.getItem('apollo-theme')==='light'){d.setAttribute('data-theme','light');var m=document.querySelector('meta[name=theme-color]');if(m)m.content='#f2f0e6';}}catch(e){}})(document.documentElement);</script>
 </head>
 <body>
 
@@ -20,13 +25,26 @@
 
 <header class="masthead">
   <a class="masthead__brand" href="index.html">Apollo Films</a>
-  <button class="masthead__toggle" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
-  <nav class="masthead__nav" id="nav">
-    <a href="showcase.html">Showcase</a>
-    <a href="production.html">Production</a>
-    <a href="about.html">About</a>
-    <a href="contact.html" aria-current="page">Contact</a>
-  </nav>
+  <div class="masthead__end">
+    <button class="masthead__toggle" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    <nav class="masthead__nav" id="nav">
+      <a href="showcase.html">Showcase</a>
+      <a href="production.html">Production</a>
+      <a href="about.html">About</a>
+      <a href="contact.html" aria-current="page">Contact</a>
+    </nav>
+    <!-- Half the disc inked, half left as hairline: the two grounds, shown
+         together. app.js only flips the mode; the half turn is CSS. -->
+    <button class="themeswitch" type="button" data-theme-toggle
+            aria-label="Switch to light mode" title="Switch to light mode">
+      <svg class="themeswitch__i" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+        <g class="themeswitch__disc">
+          <circle class="themeswitch__ring" cx="10" cy="10" r="7.5"/>
+          <path class="themeswitch__half" d="M10 2.5 A7.5 7.5 0 0 0 10 17.5 Z"/>
+        </g>
+      </svg>
+    </button>
+  </div>
 </header>
 
 <main id="main">

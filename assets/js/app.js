@@ -62,6 +62,70 @@
     });
   }
 
+  /* ---------- the room lights ----------
+     Dark is the site's default and it is the absence of the attribute, not
+     a value of one: a visitor lands in the projection room whether or not
+     their OS prefers light, because that first screen is the studio's
+     first impression. Choosing light is a decision, and it is remembered.
+
+     The restore already happened in the head, before first paint. This
+     block only carries the switching. */
+
+  var themeToggle = document.querySelector('[data-theme-toggle]');
+  if (themeToggle) {
+    var root = document.documentElement;
+    var themeMeta = document.querySelector('meta[name="theme-color"]');
+    /* The literal grounds, for the browser chrome only — it cannot read a
+       custom property. Keep in step with --black and --paper. */
+    var themeChrome = { dark: '#060603', light: '#f2f0e6' };
+    var shiftTimer = 0;
+
+    function themeNow() {
+      return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    }
+
+    /* The lamp draws its own state, so the label is the only thing that has
+       to say it out loud — and it says the destination, because that is what
+       pressing the button does. */
+    function paintTheme() {
+      var now = themeNow();
+      var label = now === 'light' ? 'Switch to dark mode' : 'Switch to light mode';
+      themeToggle.setAttribute('aria-label', label);
+      themeToggle.setAttribute('title', label);
+      if (themeMeta) themeMeta.content = themeChrome[now];
+    }
+
+    function setTheme(next) {
+      if (next !== 'light' && next !== 'dark') return;
+      if (next === themeNow()) return;
+
+      /* The grounds dissolve rather than cut. The class is the only thing
+         that gives the page a colour transition, and it comes back off as
+         soon as the swap has run — see .theme-shift in apollo.css. */
+      if (!reduceMotion) {
+        root.classList.add('theme-shift');
+        clearTimeout(shiftTimer);
+        shiftTimer = setTimeout(function () {
+          root.classList.remove('theme-shift');
+        }, 460);
+      }
+
+      if (next === 'light') root.setAttribute('data-theme', 'light');
+      else root.removeAttribute('data-theme');
+
+      try { localStorage.setItem('apollo-theme', next); } catch (e) { /* private mode */ }
+      paintTheme();
+    }
+
+    themeToggle.addEventListener('click', function () {
+      setTheme(themeNow() === 'light' ? 'dark' : 'light');
+    });
+
+    /* The markup ships labelled for dark; a page restored into light has to
+       be told the truth about itself before anyone reaches the button. */
+    paintTheme();
+  }
+
   /* ---------- homepage: the reel plays behind the index ---------- */
 
   var index = document.getElementById('index');

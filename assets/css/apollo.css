@@ -6,32 +6,105 @@
    at one weight. Hierarchy comes from scale and tracking only —
    no bold appears anywhere on the site.
 
-   Two grounds alternate down every page: projection black and
-   celluloid cream. A24's rule, kept literally — the rhythm is the
-   cut between them, so a third band colour would only soften it.
-   601's Darkroom Shadow is deliberately absent: in that system it
-   is the haze around a still, never a section you can land on.
+   Two grounds alternate down every page. A24's rule, kept literally —
+   the rhythm is the cut between them, so a third band colour would only
+   soften it. 601's Darkroom Shadow is deliberately absent: in that system
+   it is the haze around a still, never a section you can land on.
    All chroma comes from the footage.
+
+   Two modes, and they are the same room at two hours of the day.
+
+   Dark is the projection room: the floor is black, and celluloid cream is
+   the light coming off the screen. Light is the contact sheet: the floor
+   is bleached paper and the same projection black is the ink on it. 601
+   Inc.'s own site does exactly this — its cream (--col-yellow: #ece4b4)
+   exists only in dark and is dropped for light — and the reason is the
+   first principle of this system rather than a preference. A cream that
+   covered a whole page would make the interface the largest colour on
+   screen, and the footage is supposed to be the only chroma there is.
+
+   So there are three colours across both modes and never more than two
+   at once. Cream is the dark mode's light; paper is the light mode's.
+   Projection black is the one thing both modes share: a ground in dark,
+   an ink in light.
    ============================================================ */
 
 :root {
-  /* 601 Inc. palette — the two grounds and the ink */
-  /* Both grounds are declared twice: a plain sRGB hex first, then the
-     canonical OKLCH. A browser without oklch() keeps the hex and the site
-     is unchanged; everywhere else the second declaration wins. No build
-     step means no autoprefixer, so the fallback is written by hand. */
-  --cream: #ece4b4;
-  --cream: oklch(91.3% 0.063 99.6);   /* Celluloid Cream — ink, hairlines, borders */
+  /* --- the palette: three colours, never more than two at once --------
+     Each is declared twice: a plain sRGB hex first, then the canonical
+     OKLCH. A browser without oklch() keeps the hex and the site is
+     unchanged; everywhere else the second declaration wins. No build step
+     means no autoprefixer, so the fallback is written by hand. */
 
-  /* Projection Black. Not #000: the floor carries the cream's own hue at
-     the lowest chroma that survives 8-bit, so the two grounds belong to
-     one light rather than to a colour and an absence. At 12% lightness
-     that resolves to #060603 — black to the eye, tinted to the system.
-     Contrast against cream is 15.8:1, against 16.3:1 for pure black. */
+  --cream: #ece4b4;
+  --cream: oklch(91.3% 0.063 99.6);   /* Celluloid Cream — the dark mode's light */
+
+  /* Projection Black. Not #000: it carries the cream's own hue at the
+     lowest chroma that survives 8-bit, so nothing here is a colour beside
+     an absence — it is all one light at different strengths. At 12%
+     lightness that resolves to #060603. Contrast against cream is 15.8:1,
+     against 16.3:1 for pure black. The one colour both modes use. */
   --black: #060603;
   --black: oklch(12% 0.008 99.6);
 
-  --hair: 1px solid var(--cream);
+  /* Bleached Paper — the light mode's light. Carries the same hue 99.6, at
+     0.014 chroma against the cream's 0.063. That is the whole argument for
+     the value: it has to read as the same light as everything else, and it
+     covers a whole page, so it cannot out-colour the footage the way a
+     page-wide cream would. 17.8:1 against projection black. */
+  --paper: #f2f0e6;
+  --paper: oklch(95.4% 0.014 99.6);
+
+  /* --- mode: dark, the projection room --------------------------------
+     Roles, not colours. `--ground` is the floor a page lands on and
+     `--ink` is every mark made on it; `--ground-alt` is the band that
+     alternates against the floor, carrying `--ink-alt`. Swapping the four
+     is the whole of the light mode, which is why no component below names
+     a colour directly.
+
+     Dark is the default and it is the absence of an attribute, not a value
+     of one: the projection room is the studio's first impression and a
+     visitor arrives in it whether or not their OS prefers light. Light is
+     an explicit choice, and app.js remembers it. */
+  color-scheme: dark;
+
+  --ground: var(--black);
+  --ink: var(--cream);
+  --ground-alt: var(--cream);
+  --ink-alt: var(--black);
+
+  /* Channel copies of the two grounds, for the one place that needs a
+     ground at partial alpha (the phone hero's scrim). rgba() on a channel
+     list works everywhere the site already works; color-mix() does not. */
+  --ground-rgb: 6, 6, 3;
+  --ink-rgb: 236, 228, 180;
+
+  /* --- the opacity ladder ----------------------------------------------
+     Rank is opacity, never colour, so the ladder is the system's entire
+     z-axis. It was calibrated for cream on black, and it does not survive
+     being inverted: light on dark holds its contrast far better than dark
+     on light does, so the same alpha that reads as a resting row in the
+     projection room reads as a smudge on paper. Every rung is a token for
+     that reason, and light mode re-cuts them (see below) rather than
+     inheriting them. */
+  --o-ghost: 0.26;   /* a row demoted by the focus state */
+  --o-idle: 0.34;    /* an inactive phone index entry */
+  --o-quiet: 0.45;   /* bullet separators */
+  --o-rest: 0.5;     /* a resting catalogue row, a filter */
+  --o-nav: 0.55;     /* a nav item, a credit role */
+  --o-dim: 0.62;     /* dimmed metadata, the .dim class */
+  --o-hold: 0.85;    /* a button at rest, an input at rest */
+
+  /* The reel runs under type, so its strength is a contrast decision and
+     it belongs to the mode. See the light block for why these go up. */
+  --reel-hero: 0.38;
+  --reel-cat: 0.45;
+  --reel-phone: 0.66;
+
+  /* currentColor, not a named colour: a hairline is the ink of whatever
+     band it is drawn on, which is what lets one declaration serve both
+     grounds in both modes. */
+  --hair: 1px solid currentColor;
 
   --font: "Space Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
@@ -50,18 +123,110 @@
   --tight-sm: -0.01em;   /* 17 to 22px: lede */
 }
 
+/* --- mode: light, the contact sheet -----------------------------------
+   The lights come up and the cream goes out. The floor is paper, the ink
+   is the same projection black, and the alternating band is that black —
+   so the rhythm inverts rather than softening, and no third ground is
+   introduced to carry it.
+
+   Two things are re-cut rather than swapped, and both come from the same
+   fact: dark ink on a light ground loses contrast and apparent weight that
+   light ink on a dark ground keeps.
+
+   1. The ladder moves up. Cream at 0.5 on black is 4.4:1; black at 0.5 on
+      paper is 3.7:1. Each rung below is the alpha that restores the ratio
+      its dark counterpart had, so a resting row rests the same amount in
+      both modes. The top two rungs are deliberately NOT lowered: black on
+      paper at full is 17.8:1 against cream on black's 15.8:1, and that
+      extra hardness is the only compensation available for the weight
+      this type cannot add. 601 answers the same problem by shipping a
+      heavier weight in light mode (`[data-theme=light]{font-weight:500}`).
+      One weight is the rule both source systems share, so the ink carries
+      it here instead.
+
+   2. The reel is composited, not dimmed. Plain opacity is the wrong tool on
+      a light ground and it is worth being exact about why: fading footage
+      toward paper lifts the blacks AND caps the whites, so the frame can
+      never reach the ground it sits on. Measured against the real footage,
+      opacity 0.55 put the darkest pixels at 0.181 and the brightest at
+      0.673 — a picture that tops out a third short of the paper around it,
+      which the eye reads as a grey scrim laid over the film. It is the one
+      thing that made this mode look cheap.
+
+      Multiplying against the paper instead is what ink on paper actually
+      does: a white source leaves the paper alone, so the highlights reach
+      the ground and the veil is simply gone. Nothing grades the footage on
+      the way through — the frame the studio shot is the frame that prints.
+      That leaves alpha as the only thing holding type over a dark frame, so
+      the reel values below are the entire contrast budget of this mode and
+      are the numbers to move if a reel ever reads too heavy.
+
+      The blend is on the stage, not on each video. Two reels cross-fading
+      would otherwise both multiply through the overlap and the cut would
+      dip dark in the middle. Held on the stage they cross-fade normally
+      inside it and the composite multiplies once. */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --ground: var(--paper);
+  --ink: var(--black);
+  --ground-alt: var(--black);
+  --ink-alt: var(--paper);
+
+  --ground-rgb: 242, 240, 230;
+  --ink-rgb: 6, 6, 3;
+
+  --o-ghost: 0.3;
+  --o-idle: 0.38;
+  --o-quiet: 0.5;
+  --o-rest: 0.55;
+  --o-nav: 0.6;
+  --o-dim: 0.66;
+  --o-hold: 0.85;
+
+  --reel-hero: 0.62;
+  --reel-cat: 0.62;
+  --reel-phone: 0.72;
+}
+
+/* The stage is what multiplies, so it gives up its own fill and lets the
+   band behind it be the paper it prints onto. The footage goes through
+   ungraded: the frame the studio shot is the frame that prints. */
+[data-theme="light"] .hero__stage,
+[data-theme="light"] .catalogue__stage {
+  background: transparent;
+  mix-blend-mode: multiply;
+}
+
+/* The grounds dissolve into each other rather than cutting, because a
+   whole-page hard flip is the one moment a visitor would notice the
+   interface instead of the work. Held on the root for the length of the
+   swap only, so nothing else on the site ever carries a colour transition
+   it did not ask for. The `!important` is what makes it reach past the
+   components' own transitions; the class is gone in 460ms.
+   Under prefers-reduced-motion the global rule at the foot of this file
+   takes the duration back out. */
+.theme-shift,
+.theme-shift *,
+.theme-shift *::before,
+.theme-shift *::after {
+  transition: background-color 0.42s cubic-bezier(0.22, 0.61, 0.36, 1),
+              color 0.42s cubic-bezier(0.22, 0.61, 0.36, 1),
+              border-color 0.42s cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+}
+
 * { box-sizing: border-box; border-radius: 0; box-shadow: none; }
 
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  background: var(--black);
+  background: var(--ground);
 }
 
 body {
   margin: 0;
-  background: var(--black);
-  color: var(--cream);
+  background: var(--ground);
+  color: var(--ink);
   font-family: var(--font);
   font-size: 16px;
   line-height: 1.6;
@@ -82,7 +247,7 @@ img, video { max-width: 100%; display: block; }
 
 a { color: inherit; text-decoration: none; }
 
-::selection { background: var(--cream); color: var(--black); }
+::selection { background: var(--ink); color: var(--ground); }
 
 :focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
 
@@ -95,7 +260,7 @@ a { color: inherit; text-decoration: none; }
   position: fixed; top: 8px; left: 8px;
   width: auto; height: auto; clip: auto;
   padding: 8px 14px; z-index: 100;
-  background: var(--cream); color: var(--black);
+  background: var(--ink); color: var(--ground);
 }
 
 /* --- type scale ---------------------------------------------- */
@@ -180,7 +345,7 @@ a { color: inherit; text-decoration: none; }
 
 p { margin: 0; max-width: 58ch; }
 
-.dim, .muted { opacity: 0.62; }
+.dim, .muted { opacity: var(--o-dim); }
 
 /* Secondary text — contact lines, credits, footer links. Below the 42px
    floor 601 sets, kept small so a real catalogue stays navigable. */
@@ -189,8 +354,11 @@ p { margin: 0; max-width: 58ch; }
 /* --- bands ---------------------------------------------------- */
 
 .band { padding: var(--band) var(--gutter); }
-.band--dark { background: var(--black); color: var(--cream); }
-.band--cream { background: var(--cream); color: var(--black); }
+.band--dark { background: var(--ground); color: var(--ink); }
+/* Named for what it is in the projection room. In the contact sheet it is
+   the black band on paper — the alternate ground either way, so the class
+   still says the same thing about the rhythm. */
+.band--cream { background: var(--ground-alt); color: var(--ink-alt); }
 .band--tight { padding-top: calc(var(--band) * 0.42); }
 .band--flush { padding-left: 0; padding-right: 0; }
 
@@ -199,8 +367,7 @@ p { margin: 0; max-width: 58ch; }
 .stack--xl { gap: 72px; }
 .stack--sm { gap: var(--gap); }
 
-.rule { height: 0; background: none; border: 0; border-top: var(--hair); margin: 0; }
-.band--cream .rule { border-top-color: var(--black); }
+.rule { height: 0; background: none; border: 0; color: inherit; border-top: var(--hair); margin: 0; }
 
 /* --- masthead -------------------------------------------------- */
 
@@ -213,8 +380,8 @@ p { margin: 0; max-width: 58ch; }
   justify-content: space-between;
   gap: 24px;
   padding: 18px var(--gutter);
-  background: var(--black);
-  color: var(--cream);
+  background: var(--ground);
+  color: var(--ink);
   border-bottom: var(--hair);
 }
 
@@ -224,6 +391,12 @@ p { margin: 0; max-width: 58ch; }
   text-transform: uppercase;
 }
 
+/* Everything that is not the wordmark rides in one end group, so the bar
+   stays a two-part composition however many controls land in it. Left
+   static on purpose: the nav drops out of flow under 780px and measures
+   its absolute position against the masthead, which is the sticky one. */
+.masthead__end { display: flex; align-items: center; gap: 34px; }
+
 .masthead__nav { display: flex; align-items: center; }
 
 /* 601 separates nav items with the bullet glyph, not with rules. */
@@ -232,7 +405,7 @@ p { margin: 0; max-width: 58ch; }
   font-size: 15px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.55;
+  opacity: var(--o-nav);
   transition: opacity 0.18s ease;
 }
 .masthead__nav a:hover,
@@ -241,7 +414,7 @@ p { margin: 0; max-width: 58ch; }
 .masthead__nav a:not(:last-child)::after {
   content: "•";
   margin-left: 21px;
-  opacity: 0.45;
+  opacity: var(--o-quiet);
 }
 .masthead__nav a:last-child { padding-right: 0; }
 
@@ -252,9 +425,50 @@ p { margin: 0; max-width: 58ch; }
   font-size: 15px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.55;
+  opacity: var(--o-nav);
 }
 .masthead__toggle:hover { opacity: 1; }
+
+/* --- the room lights ---------------------------------------------------
+   A disc with one half inked. It is the only mark on the site that carries
+   a fill, and it earns the exception by being the one control whose whole
+   job is to show two grounds at once: the hairline half is the paper, the
+   inked half is the projection black, and which one leads is which room you
+   are standing in. A drawing of a sun was tried first and failed the only
+   test that matters here — at 19px in a corner nobody reads it as a mode.
+
+   The state change is a half turn, on the commit curve the catalogue's
+   hairline uses. Nothing redraws; the disc simply comes round. */
+.themeswitch {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  margin: -5px;   /* the tap target grows, the disc stays put */
+  opacity: var(--o-nav);
+  transition: opacity 0.18s ease;
+}
+.themeswitch:hover { opacity: 1; }
+.themeswitch:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
+[data-theme="light"] .themeswitch { opacity: 1; }
+
+.themeswitch__i {
+  display: block;
+  width: 19px;
+  height: 19px;
+  overflow: visible;
+}
+
+.themeswitch__disc {
+  transform-origin: 10px 10px;
+  transform: rotate(0deg);
+  transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+[data-theme="light"] .themeswitch__disc { transform: rotate(180deg); }
+
+.themeswitch__ring { fill: none; stroke: currentColor; stroke-width: 1; }
+.themeswitch__half { fill: currentColor; stroke: none; }
 
 /* --- homepage hero: the reel plays behind the index ------------ */
 
@@ -267,11 +481,11 @@ p { margin: 0; max-width: 58ch; }
   gap: 48px;
   padding: var(--gutter);
   overflow: hidden;
-  background: var(--black);
+  background: var(--ground);
   border-bottom: var(--hair);
 }
 
-.hero__stage { position: absolute; inset: 0; background: var(--black); }
+.hero__stage { position: absolute; inset: 0; background: var(--ground); }
 
 .hero__media {
   position: absolute;
@@ -282,9 +496,11 @@ p { margin: 0; max-width: 58ch; }
   opacity: 0;
   transition: opacity 0.6s ease;
 }
-/* The reel sits under cream type, so it runs at partial strength — the
-   black beneath it is the only "scrim" the system allows. */
-.hero__media.is-active { opacity: 0.38; }
+/* The reel sits under type, so it runs at partial strength — the ground
+   beneath it is the only "scrim" the system allows. The strength belongs
+   to the mode: held down over black so cream survives it, let up over
+   paper where the ink can take it. */
+.hero__media.is-active { opacity: var(--reel-hero); }
 
 .hero__row {
   position: relative;
@@ -305,7 +521,7 @@ p { margin: 0; max-width: 58ch; }
   font-size: clamp(30px, 4.6vw, 68px);
   line-height: 0.98;
   letter-spacing: var(--tight-lg);
-  opacity: 0.45;
+  opacity: var(--o-quiet);
   transition: opacity 0.18s ease;
 }
 
@@ -361,10 +577,10 @@ p { margin: 0; max-width: 58ch; }
     height: calc(100svh - var(--header-h));
   }
 
-  /* Brighter than the desktop reel, which runs at 0.38 because 88px titles
+  /* Brighter than the desktop reel, which is held down because 88px titles
      are laid across it. Here the only type over the frame is a 14px index
      in one corner, so the film can come up to something like full strength. */
-  .hero--track .hero__media.is-active { opacity: 0.66; }
+  .hero--track .hero__media.is-active { opacity: var(--reel-phone); }
 
   .hero--track .hero__deck {
     position: sticky;
@@ -390,23 +606,16 @@ p { margin: 0; max-width: 58ch; }
     content: "";
     position: absolute;
     inset: 38% 0 0;
-    /* Fallback first, then the token-bound version, same as the palette
-       above. The scrim has to be the ground it sits on, so it is mixed
-       from --black rather than restating a colour of its own. */
+    /* The scrim has to be the ground it sits on, so it is built from the
+       ground's own channels rather than restating a colour of its own —
+       which is also what carries it into light mode without a second
+       gradient. rgba() on a channel list needs no color-mix() support. */
     background: linear-gradient(
       to top,
-      #060603 0%,
-      #060603 12%,
-      rgba(6, 6, 3, 0.86) 34%,
-      rgba(6, 6, 3, 0.44) 64%,
-      transparent 100%
-    );
-    background: linear-gradient(
-      to top,
-      var(--black) 0%,
-      var(--black) 12%,
-      color-mix(in srgb, var(--black) 86%, transparent) 34%,
-      color-mix(in srgb, var(--black) 44%, transparent) 64%,
+      rgb(var(--ground-rgb)) 0%,
+      rgb(var(--ground-rgb)) 12%,
+      rgba(var(--ground-rgb), 0.86) 34%,
+      rgba(var(--ground-rgb), 0.44) 64%,
       transparent 100%
     );
   }
@@ -447,7 +656,7 @@ p { margin: 0; max-width: 58ch; }
     line-height: 1.5;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    opacity: 0.34;
+    opacity: var(--o-idle);
     transition: opacity 0.45s ease;
   }
   .hero--track .index li.is-active a { opacity: 1; }
@@ -476,7 +685,7 @@ p { margin: 0; max-width: 58ch; }
     font-size: 10px;
     transform: none;
     margin-left: 9px;
-    opacity: 0.6;
+    opacity: var(--o-dim);
   }
 }
 
@@ -492,7 +701,7 @@ p { margin: 0; max-width: 58ch; }
 
 .catalogue {
   position: relative;
-  background: var(--black);
+  background: var(--ground);
   /* The list below is pulled up by a negative margin equal to the stage's
      height, which cancels the stage out of this box: height = stage + list
      - stage = list. With all 24 rows the list is the taller of the two and
@@ -507,7 +716,7 @@ p { margin: 0; max-width: 58ch; }
   top: var(--header-h);
   height: calc(100svh - var(--header-h));
   overflow: hidden;
-  background: var(--black);
+  background: var(--ground);
 }
 
 .catalogue__media {
@@ -519,7 +728,7 @@ p { margin: 0; max-width: 58ch; }
   opacity: 0;
   transition: opacity 0.55s ease;
 }
-.catalogue__media.is-active { opacity: 0.45; }
+.catalogue__media.is-active { opacity: var(--reel-cat); }
 
 /* --- catalogue without a pointer: the committed film --------------
    With no hover the reel changes on its own, when the scroll comes to
@@ -538,7 +747,7 @@ p { margin: 0; max-width: 58ch; }
 .catalogue--focus .catalogue__media.is-active { transform: scale(1); }
 
 .catalogue--focus .row {
-  opacity: 0.26;
+  opacity: var(--o-ghost);
   transition: opacity 0.5s ease;
 }
 .catalogue--focus li.is-active > .row { opacity: 1; }
@@ -549,14 +758,13 @@ p { margin: 0; max-width: 58ch; }
    committed row is the only bright row there is: pressing something is not
    choosing it, the scroll settling is. Written past the hover rule further
    down, which matches on specificity alone and would otherwise win on order. */
-.catalogue--focus .catalogue__list > li:not(.is-active) > .row { opacity: 0.26; }
+.catalogue--focus .catalogue__list > li:not(.is-active) > .row { opacity: var(--o-ghost); }
 
 /* The hairline is drawn twice: the row's own, dimmed, and a full-strength
    copy over it that draws itself in when the row takes the reel. */
 .catalogue--focus .catalogue__list > li {
   position: relative;
-  border-top-color: rgba(236, 228, 180, 0.3);
-  border-top-color: color-mix(in srgb, var(--cream) 30%, transparent);
+  border-top-color: rgba(var(--ink-rgb), 0.3);
 }
 .catalogue--focus .catalogue__list > li::after {
   content: "";
@@ -597,7 +805,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--cream);
+  background: currentColor;
   animation: cue-pulse 2.6s ease-in-out infinite;
 }
 
@@ -632,7 +840,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   align-items: baseline;
   gap: 0 24px;
   padding: 18px 0 22px;
-  opacity: 0.5;
+  opacity: var(--o-rest);
   transition: opacity 0.2s ease;
 }
 .row:hover, .row:focus-visible, li.is-active > .row { opacity: 1; }
@@ -674,16 +882,16 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   font-size: 13px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.5;
+  opacity: var(--o-rest);
   transition: opacity 0.18s ease;
 }
-.filters button::after { content: "•"; margin-left: 21px; opacity: 0.45; }
+.filters button::after { content: "•"; margin-left: 21px; opacity: var(--o-quiet); }
 .filters button:last-of-type::after { content: none; }
 .filters button:hover,
 .filters button[aria-pressed="true"] { opacity: 1; }
 .filters button:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
 
-.filters__count { margin-left: auto; opacity: 0.62; }
+.filters__count { margin-left: auto; opacity: var(--o-dim); }
 
 /* --- section head ------------------------------------------------ */
 
@@ -696,8 +904,6 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   padding-bottom: 18px;
   border-bottom: var(--hair);
 }
-.band--cream .sectionhead { border-bottom-color: var(--black); }
-
 .section[hidden] { display: none; }
 
 /* --- editorial two-column ----------------------------------------- */
@@ -731,7 +937,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   position: relative;
   padding: 24px 0 28px;
   border-top: 1px solid currentColor;
-  opacity: 0.5;
+  opacity: var(--o-rest);
   transition: opacity 0.3s ease;
 }
 .ethos__item:last-child { border-bottom: 1px solid currentColor; }
@@ -864,7 +1070,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   font-size: 13px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.62;
+  opacity: var(--o-dim);
   transition: opacity 0.18s ease;
   width: fit-content;
 }
@@ -889,7 +1095,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   letter-spacing: 0.16em;
   text-transform: uppercase;
   transition: opacity 0.18s ease;
-  opacity: 0.85;
+  opacity: var(--o-hold);
 }
 .btn:hover { opacity: 1; }
 .btn:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
@@ -904,7 +1110,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.62;
+  opacity: var(--o-dim);
 }
 
 .field input,
@@ -914,12 +1120,14 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   line-height: 1.3;
   letter-spacing: var(--tight-md);
   font-weight: 400;
-  color: var(--cream);
+  /* Form controls do not inherit colour on their own, so the ink has to be
+     asked for explicitly — and asked for as the band's ink, not a name. */
+  color: inherit;
   background: transparent;
   border: 0;
   border-bottom: var(--hair);
   padding: 6px 0 10px;
-  opacity: 0.85;
+  opacity: var(--o-hold);
   transition: opacity 0.18s ease;
 }
 .field input:focus,
@@ -927,9 +1135,9 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 .field textarea { resize: vertical; min-height: 140px; }
 
 .field--row { flex-direction: row; align-items: center; gap: var(--gap); }
-.field--row input { width: 15px; height: 15px; accent-color: var(--cream); }
+.field--row input { width: 15px; height: 15px; accent-color: currentColor; }
 
-.form__note { font-size: 13px; opacity: 0.62; max-width: 46ch; }
+.form__note { font-size: 13px; opacity: var(--o-dim); max-width: 46ch; }
 
 /* --- film detail ------------------------------------------------------ */
 
@@ -937,6 +1145,8 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
+  /* The one place a named colour is still correct in both modes: this is a
+     film playing at full strength, and you do not project onto paper. */
   background: var(--black);
   display: block;
 }
@@ -949,7 +1159,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   border-top: var(--hair);
 }
 
-.filmnav a { display: flex; flex-direction: column; gap: 8px; max-width: 46%; opacity: 0.55; transition: opacity 0.18s ease; }
+.filmnav a { display: flex; flex-direction: column; gap: 8px; max-width: 46%; opacity: var(--o-nav); transition: opacity 0.18s ease; }
 .filmnav a:hover { opacity: 1; }
 .filmnav a:last-child { text-align: right; align-items: flex-end; }
 .filmnav .t {
@@ -963,8 +1173,8 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 /* One carved wordmark, one hairline, one row of facts. Nothing stacked,
    nothing repeated from the page above it. */
 .sitefooter {
-  background: var(--black);
-  color: var(--cream);
+  background: var(--ground);
+  color: var(--ink);
   padding: var(--band) var(--gutter) 24px;
   border-top: var(--hair);
   display: flex;
@@ -996,13 +1206,13 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.55;
+  opacity: var(--o-nav);
   transition: opacity 0.18s ease;
 }
 .sitefooter__nav a:hover { opacity: 1; }
-.sitefooter__nav a:not(:last-child)::after { content: "•"; margin: 0 12px; opacity: 0.45; }
+.sitefooter__nav a:not(:last-child)::after { content: "•"; margin: 0 12px; opacity: var(--o-quiet); }
 
-.sitefooter__bar > .label { opacity: 0.55; }
+.sitefooter__bar > .label { opacity: var(--o-nav); }
 .sitefooter__bar a.label:hover { opacity: 1; }
 
 /* --- fact row ------------------------------------------------------------ */
@@ -1028,7 +1238,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  opacity: 0.55;
+  opacity: var(--o-nav);
 }
 
 .credits .name { font-size: clamp(18px, 1.5vw, 22px); letter-spacing: var(--tight-md); }
@@ -1042,7 +1252,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   letter-spacing: var(--tight-md);
   max-width: 46ch;
 }
-.namelist span:not(:last-child)::after { content: " • "; opacity: 0.45; }
+.namelist span:not(:last-child)::after { content: " • "; opacity: var(--o-quiet); }
 
 /* --- entrances ----------------------------------------------------------
    Nothing here changes a colour, a size, or a weight — the page arrives
@@ -1060,7 +1270,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 }
 .js [data-reveal]:not([data-split]).is-in { opacity: 1; transform: none; }
 /* Dimmed metadata reveals to its own strength, not to full ink. */
-.js [data-reveal].dim.is-in, .js [data-reveal].muted.is-in { opacity: 0.62; }
+.js [data-reveal].dim.is-in, .js [data-reveal].muted.is-in { opacity: var(--o-dim); }
 
 /* A hairline is drawn, not faded — it reads as the rule being ruled. */
 .js .rule[data-reveal] {
@@ -1120,13 +1330,19 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
     align-items: flex-start;
     gap: 18px;
     padding: 28px var(--gutter) 34px;
-    background: var(--black);
+    background: var(--ground);
     border-bottom: var(--hair);
   }
   .masthead__nav.is-open { display: flex; }
   .masthead__nav a { padding: 0; font-size: 22px; }
   .masthead__nav a:not(:last-child)::after { content: none; }
   .masthead__toggle { display: block; }
+
+  /* With the nav folded away the bar carries the wordmark, Menu, and both
+     the lamp on one line. The lamp does not fold into the Menu panel: a
+     reader in the wrong room should not have to open a navigation menu to
+     leave it. */
+  .masthead__end { gap: 22px; }
 
   .columns { grid-template-columns: 1fr; gap: 16px; }
 
