@@ -6,7 +6,7 @@ brand
 
 ## Users
 
-Apollo Films is an Istanbul film studio founded in 2022 by Rafael Indiana Çetin. Four
+Apollo Films is an Istanbul film studio founded in 2022 by Rafael Cemo Çetin. Four
 audiences arrive at this site, and all four are primary. They differ in what they came
 to confirm, not in how much they matter.
 

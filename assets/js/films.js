@@ -76,7 +76,7 @@ Object.keys(FILE).forEach(function (k) {
 const CREDITS = {
 
   mirage: [
-    { role: 'Creative Direction', name: 'Rafael Indiana Çetin' },
+    { role: 'Creative Direction', name: 'Rafael Cemo Çetin' },
     { role: 'Producer', name: 'Orfeo Çetin' },
     { role: 'Executive Producer', name: 'Hazer Baycan' },
     { role: 'Executive Producer', name: 'Tuğba Akpınar' },
@@ -103,13 +103,13 @@ const CREDITS = {
   ],
 
   laCasa: [
-    { role: 'Written & Directed', name: 'Rafael Indiana Çetin' },
+    { role: 'Written & Directed', name: 'Rafael Cemo Çetin' },
     { role: 'Cinematographer', name: 'Yakup Algül' },
     { role: 'Production', name: 'Kala Film' }
   ],
 
   constanze: [
-    { role: 'Written & Directed', name: 'Rafael Indiana Çetin' },
+    { role: 'Written & Directed', name: 'Rafael Cemo Çetin' },
     { role: 'Cinematographer', name: 'Yakup Akgül' },
     { role: 'Executive Producer', name: 'Cüneyt Utkular' },
     { role: 'Producer', name: 'Hakan Atasoy' },

@@ -81,30 +81,33 @@ doesn't leave twenty-four decoded films on a phone. Desktop hover is untouched.
 | --- | --- |
 | `index.html` | Hero only — five titles at display scale, hovering one runs that film's reel full-bleed behind them — then the studio note and a one-line CTA |
 | `showcase.html` | The catalogue — 24 numbered hairline rows over a pinned reel that swaps on hover, or on scroll-end where there is no hover, filtered by category |
-| `production.html` | Ethos + the six principles as a hovered reel of behind-the-scenes stills — one 3D-tilting frame, no numerals |
-| `about.html` | Studio text, left-aligned, two-column with sticky side labels; display lines rise word by word as they arrive |
+| `about.html` | Opens on the wall — the catalogue hung in 3D behind the studio's own line — then the studio note, closing into a footer that carries the contact rows |
 | `contact.html` | Form in the system's type; submitting opens the user's mail client |
 | `film.html?f=<slug>` | Full-bleed player with controls, cast/crew credits, prev/next |
 
-## The ethos reel
+## The wall
 
-`production.html` carries the six principles as `.ethos`. The numerals are gone; the
-sequence is carried by motion instead, and one card serves all six words:
+`about.html` opens on `.wall`: the catalogue hung on one plane in real perspective,
+with the page's opening line standing in front of it. `app.js` builds it from
+`window.APOLLO_FILMS` — 40 frames on a desktop (8 × 5), 24 on a phone (4 × 6) — and
+every frame's position, size, tilt and depth comes out of a `sin`-based hash of its own
+index. Nothing is random: a reload gives the reader the same room back.
 
-- **`.ethos--follow`** — a fine pointer and a viewport of 860px or more. The frame is
-  `position: fixed`, rides the cursor, and tilts with it (`--rx` / `--ry` on
-  `.ethos__tilt`). Hover or focus a word to call its still.
-- **`.ethos--flow`** — everything else. There is no cursor to hover with, so the frame
-  sits above the list and the list steps through itself every 2.8s, the dwell drawn
-  along each row's own top hairline. Tapping a word takes the sequence from there.
-
-The mode is re-derived on resize, so a window crossing 860px switches cleanly. Stills
-live in `assets/backstage/cards/` at 1200px wide — behind-the-scenes frames, one per
-principle, named after the word they belong to. The originals stay in
-`assets/backstage/`. Two `<img>` layers cross-fade; the first frame ships in the markup
-so the card is a still even with no script, and the rest load as the reel reaches them.
-Depth is rotation only — `ethos-sway` on the frame, `ethos-drift` on the still. No
-shadow, no radius, no fill, per the system's non-negotiables.
+- **Three z-planes.** Far is blurred and rides `--o-quiet`, mid takes a 1px blur at
+  `--o-hold`, near is sharp at the reel's own strength. Perspective does the sizing —
+  a frame is large because it is close, not because it was drawn large.
+- **Three frames are running.** The nearest films with a loop get a `<video>` laid over
+  their own still, faded in once it is actually playing. Touch, reduced motion, a
+  metered connection and every phone get the stills alone.
+- **The middle is covered, not cleared.** A radial of `--ground` sits over the field so
+  the type lands on the page's own floor; the frames keep running underneath. Because
+  the scrim is the ground token, the contact sheet inverts it for free — and there the
+  whole field multiplies, the same bargain the hero stage strikes.
+- **Stills are asked for at the size they land.** The CDN takes `?format=500w` (750w for
+  the near plane), which is the difference between 2.5 MB of thumbnails and about 700 KB.
+- The plane leans toward the cursor over a long transition, drifts on a 54s loop, and
+  stops decoding when it scrolls off screen. Without script the field is empty and the
+  copy reads on the ground, as it did before.
 
 ## Entrances
 
@@ -145,13 +148,18 @@ Tokens live at the top of `assets/css/apollo.css`.
 | Layout | Full-bleed, no max-width. Gutter `clamp(20px, 4vw, 56px)`, section gap `clamp(72px, 10vw, 120px)`, element gap 12px |
 | Buttons | 1px hairline outline, 12px / 21px padding, never a fill |
 | Nav | Bullet `•` separators at 21px padding, not dividers |
-| Footer | One carved wordmark over one hairline over one row of facts — no columns, and it never repeats a line from the page above it |
+| Footer | One row of facts under one hairline — the bar's own rule, and the only one the footer draws. It never repeats a line from the page above it |
 | Non-negotiable | `border-radius: 0`, `box-shadow: none`, no fourth colour, nothing centred |
 
 Two grounds alternate down every page — black and cream — so rhythm comes from
 value, never from colour. This is A24's rule taken literally: the cut between the
-two bands *is* the rhythm, so a third ground only softens it. Every page closes on
-a cream band before the black footer, which is the last cut on the way out.
+two bands *is* the rhythm, so a third ground only softens it. Every page but one
+closes on a cream band before the black footer, which is the last cut on the way
+out. `about.html` is the exception, and deliberately: it closes black into black,
+so the contact rows in its footer read as the page running out rather than as a
+slab bolted under it. That is why the footer draws no rule of its own — with a
+cream band above, the change of ground already is the divider; with a black one,
+there is nothing to divide.
 All chroma on the site comes from the footage.
 
 ### Where the merge breaks 601 on purpose
@@ -187,8 +195,8 @@ Where footage plays:
 
 Sources are attached on demand, not at page load, so a 24-film page opens one
 connection rather than 24. Reduced-motion visitors get posters and never a moving frame.
-The hero and the ethos reel still fetch nothing on a touch device — only the showcase
-opts back in, because there the reel is the interaction rather than a background.
+The hero still fetches nothing on a touch device — only the showcase opts back in,
+because there the reel is the interaction rather than a background.
 
 ### Two cuts per film
 

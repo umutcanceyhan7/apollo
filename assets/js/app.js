@@ -317,7 +317,7 @@
     });
 
     /* A window can cross between the two, so the mode is re-derived rather
-       than decided once at load — the same handling the ethos reel uses. */
+       than decided once at load. */
     function heroSetMode() {
       var on = window.matchMedia('(max-width: 780px)').matches;
       if (on === trackOn) return;
@@ -641,204 +641,6 @@
     }
   }
 
-  /* ---------- production: the ethos reel ----------
-     Six words, one frame. With a fine pointer the frame rides the cursor
-     and tilts with it — a still held like a card being turned. Without a
-     pointer there is nothing to hover, so the list steps through itself
-     and the frame becomes part of the page. */
-
-  var ethos = document.getElementById('ethos');
-  if (ethos) {
-    var eItems = [].slice.call(ethos.querySelectorAll('.ethos__item'));
-    var eCard = ethos.querySelector('[data-ethos-card]');
-    var eTilt = ethos.querySelector('.ethos__tilt');
-    var eShots = [].slice.call(ethos.querySelectorAll('.ethos__shot'));
-    var eLayer = 0;      /* which of the two <img> layers is showing */
-    var eAt = -1;        /* active word, -1 = nothing shown */
-    var eDwell = 2800;
-    var eFollow = null;  /* null until the first setMode() */
-    var eTimer = 0;
-    var eRaf = 0;
-    var eOver = false;
-    /* current and target position of the card, in px */
-    var cx = 0, cy = 0, gx = 0, gy = 0;
-
-    ethos.style.setProperty('--dwell', eDwell + 'ms');
-
-    var eCache = {};
-    function eLoad(src) {
-      if (!src || eCache[src]) return;
-      eCache[src] = new Image();
-      eCache[src].src = src;
-    }
-
-    /* Cross-fade between the two layers. The incoming layer is held back
-       until it has actually decoded, so a slow frame never flashes empty. */
-    function eShow(i) {
-      if (i === eAt) return;
-      eAt = i;
-      eItems.forEach(function (li, k) { li.classList.toggle('is-active', k === i); });
-
-      var src = eItems[i].dataset.shot;
-      var cur = eShots[eLayer];
-      var next = eShots[(eLayer + 1) % eShots.length];
-
-      function swap() {
-        next.classList.add('is-on');
-        cur.classList.remove('is-on');
-        eLayer = (eLayer + 1) % eShots.length;
-      }
-
-      eLoad(eItems[(i + 1) % eItems.length].dataset.shot);   /* the one after */
-
-      if (next.getAttribute('src') === src) { swap(); return; }
-      next.setAttribute('src', src);
-      if (next.complete) swap();
-      else next.onload = next.onerror = swap;
-    }
-
-    /* The card is fixed at the viewport origin and moved by transform, so
-       following the cursor costs one compositor property and no layout. */
-    function eLoop() {
-      /* The mode can change under a running loop — a window dragged narrow
-         mid-hover. A follow-mode transform left on a flow-mode card drags the
-         frame down over the list, so the loop drops it on the way out. */
-      if (!eFollow) { eRaf = 0; eCard.style.transform = ''; return; }
-      cx += (gx - cx) * 0.18;
-      cy += (gy - cy) * 0.18;
-      eCard.style.transform = 'translate3d(' + cx.toFixed(1) + 'px,' + cy.toFixed(1) + 'px,0)';
-      if (eOver || Math.abs(gx - cx) > 0.4 || Math.abs(gy - cy) > 0.4) {
-        eRaf = requestAnimationFrame(eLoop);
-      } else {
-        eRaf = 0;
-      }
-    }
-
-    function eAim(e) {
-      var r = eCard.getBoundingClientRect();
-      var w = r.width || 320;
-      var h = r.height || 213;
-      /* Kept clear of the words: the card sits to whichever side has room. */
-      var side = e.clientX < window.innerWidth / 2 ? 1 : -1;
-      gx = Math.min(Math.max(e.clientX + side * (w * 0.62) - w / 2, 12), window.innerWidth - w - 12);
-      gy = Math.min(Math.max(e.clientY - h / 2, 12), window.innerHeight - h - 12);
-
-      /* Tilt reads off the cursor's place in the viewport, not off the card
-         — the card is under the cursor, so it would have nothing to read. */
-      if (!reduceMotion) {
-        eTilt.style.setProperty('--ry', ((e.clientX / window.innerWidth - 0.5) * 18).toFixed(2) + 'deg');
-        eTilt.style.setProperty('--rx', (-(e.clientY / window.innerHeight - 0.5) * 12).toFixed(2) + 'deg');
-      }
-      if (!eRaf) eRaf = requestAnimationFrame(eLoop);
-    }
-
-    function eStopFlow() { if (eTimer) { clearInterval(eTimer); eTimer = 0; } }
-
-    function eStartFlow() {
-      eStopFlow();
-      if (reduceMotion || eItems.length < 2) return;
-      eTimer = setInterval(function () { eShow((eAt + 1) % eItems.length); }, eDwell);
-    }
-
-    function eEnter(i) {
-      return function (e) {
-        eShow(i);
-        /* A pointer that exists on a flow-mode layout — a tablet with a mouse,
-           a narrow desktop window — picks a word and the sequence goes on from
-           it. Nothing else here applies: the frame is already in the page. */
-        if (!eFollow) { eStartFlow(); return; }
-        eOver = true;
-        eCard.classList.add('is-on');
-        if (e && e.clientX != null) eAim(e);
-      };
-    }
-
-    eItems.forEach(function (li, i) {
-      var enter = eEnter(i);
-      li.addEventListener('mouseenter', enter);
-      li.addEventListener('focus', enter);
-      /* Flow mode: a tap picks a word and the sequence carries on from it. */
-      li.addEventListener('click', function () {
-        if (eFollow) return;
-        eShow(i);
-        eStartFlow();
-      });
-    });
-
-    ethos.addEventListener('mousemove', function (e) { if (eFollow && eOver) eAim(e); });
-    ethos.addEventListener('mouseleave', function () {
-      if (!eFollow) return;
-      eOver = false;
-      eCard.classList.remove('is-on');
-    });
-    ethos.addEventListener('focusout', function (e) {
-      if (!eFollow) return;
-      if (!ethos.contains(e.relatedTarget)) eCard.classList.remove('is-on');
-    });
-
-    /* Flow mode pulls six stills over what may be a phone connection, so it
-       only runs while the section is actually on screen. */
-    var eSeen = null;
-    if ('IntersectionObserver' in window) {
-      eSeen = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (eFollow) return;
-          if (en.isIntersecting) { if (eAt < 0) eShow(0); eStartFlow(); }
-          else eStopFlow();
-        });
-      }, { threshold: 0.15 });
-    }
-
-    /* A window can cross between the two modes — resizing a desktop window
-       narrow, or docking a tablet to a mouse — so the mode is re-derived
-       rather than decided once at load. */
-    function eSetMode() {
-      var follow = window.matchMedia('(hover: hover) and (pointer: fine)').matches
-        && window.innerWidth >= 860;
-      if (follow === eFollow) return;
-      eFollow = follow;
-      ethos.classList.toggle('ethos--follow', follow);
-      ethos.classList.toggle('ethos--flow', !follow);
-
-      if (follow) {
-        eStopFlow();
-        if (eSeen) eSeen.unobserve(ethos);
-        eOver = false;
-        eCard.classList.remove('is-on');
-        eCard.style.transform = '';
-        eItems.forEach(function (li) { li.classList.remove('is-active'); });
-        eAt = -1;
-        eShots.forEach(function (s) { s.classList.remove('is-on'); });
-      } else {
-        if (eRaf) { cancelAnimationFrame(eRaf); eRaf = 0; }
-        eOver = false;
-        eCard.classList.remove('is-on');
-        eCard.style.transform = '';
-        if (eAt < 0 && eShots[0].getAttribute('src') === eItems[0].dataset.shot) {
-          /* The first frame is already in the markup — adopt it rather than
-             cross-fading a second copy of the same file over the top of it. */
-          eShots[0].classList.add('is-on');
-          eLayer = 0;
-          eAt = 0;
-          eItems[0].classList.add('is-active');
-          eLoad(eItems[1].dataset.shot);
-        } else {
-          eShow(eAt < 0 ? 0 : eAt);
-        }
-        if (eSeen) eSeen.observe(ethos);
-        else eStartFlow();
-      }
-    }
-
-    eSetMode();
-
-    var eResize;
-    window.addEventListener('resize', function () {
-      clearTimeout(eResize);
-      eResize = setTimeout(eSetMode, 150);
-    });
-  }
-
   /* ---------- film detail ---------- */
 
   var detail = document.getElementById('film');
@@ -1017,6 +819,182 @@
       setTimeout(begin, 1200);
     } else {
       startReveals();
+    }
+  }
+
+  /* ---------- about: the wall ----------
+     The about page opens on the catalogue hung in depth. The layout is a
+     grid every frame is then knocked out of: each starts at the centre of a
+     cell and is moved, sized, turned and pushed back by numbers derived from
+     its own index. Nothing here is random — a reload gives the reader the
+     same room back, which is the difference between a wall and a shuffle.
+
+     Depth carries the rest. A frame takes one of three z-planes, and how
+     large it lands, how much it blurs and how far it swings under the
+     pointer all follow from that one number and the perspective on the
+     field (see .wall in apollo.css). */
+
+  var wallPlane = document.getElementById('wall-plane');
+  if (wallPlane && films.length) {
+    var wall = document.querySelector('.wall');
+    var wallWide = window.matchMedia('(min-width: 761px)');
+    var wallSave = !!(navigator.connection && navigator.connection.saveData);
+    var wallReels = [];
+
+    /* Deterministic in place of Math.random: index in, the same number out,
+       every visit. */
+    function wallRand(i, salt) {
+      var x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
+      return x - Math.floor(x);
+    }
+    function wallSpan(i, salt, lo, hi) { return lo + wallRand(i, salt) * (hi - lo); }
+
+    /* The CDN serves whatever width is asked for, and at these sizes the
+       delivered thumbnail is four times the pixels the tile can show — a
+       full-size wall is 2.5 MB of stills nobody is reading. Only the near
+       plane is in focus, so only the near plane is worth 750w. */
+    function wallStill(url, w) {
+      return url + (url.indexOf('?') > -1 ? '&' : '?') + 'format=' + w + 'w';
+    }
+
+    /* Three planes, and every frame belongs to exactly one. Widths are
+       multiples of the cell, so a near frame overlaps its neighbours and a
+       far one leaves the ground showing — which is the depth, seen. */
+    var WALL_TIERS = [
+      { cls: 'far',  z: [-520, -330], w: [0.80, 1.10] },
+      { cls: 'mid',  z: [-190, -60],  w: [0.92, 1.26] },
+      { cls: 'near', z: [30, 170],    w: [1.02, 1.40] }
+    ];
+    /* Weighted toward the frame the site actually shoots. The phone gets its
+       own weighting: a portrait screen cut into rows leaves a band of ground
+       under every 16:9 tile, and a crop is the cheapest way to close it. */
+    var WALL_AR = ['16 / 9', '16 / 9', '16 / 9', '3 / 2', '4 / 5', '1 / 1'];
+    var WALL_AR_NARROW = ['4 / 5', '1 / 1', '3 / 2', '4 / 5', '16 / 9', '1 / 1'];
+
+    /* The frame comes up when its own still does — see .wall__tile. */
+    function wallLight() {
+      if (this.parentNode) this.parentNode.classList.add('is-lit');
+    }
+
+    function buildWall() {
+      wallReels = [];
+      wallPlane.textContent = '';
+
+      var wide = wallWide.matches;
+      var cols = wide ? 8 : 4;
+      var rows = wide ? 5 : 6;
+      var cells = cols * rows;
+      var cw = 100 / cols;
+      var ch = 100 / rows;
+      /* A phone's cells are tall and narrow and a 16:9 frame is neither, so
+         a wall built to the desktop's proportions leaves black bands between
+         the rows. The frames are widened past their cell to close them —
+         they overlap sideways instead, which is what the wall wants
+         anyway. */
+      var spread = wide ? 1 : 1.2;
+      var ars = wide ? WALL_AR : WALL_AR_NARROW;
+
+      /* Forty cells against twenty-four films, so the catalogue runs round
+         twice. Stepping by the column count rather than by one puts a film's
+         second appearance a full row away from its first, which is what
+         keeps the repeat from reading as a repeat. */
+      var near = [];
+
+      for (var n = 0; n < cells; n++) {
+        var film = films[(n * 3 + Math.floor(n / cols)) % films.length];
+        if (!film || !film.still) continue;
+
+        var tier = WALL_TIERS[Math.min(2, Math.floor(wallRand(n, 3) * 3))];
+        var col = n % cols;
+        var row = Math.floor(n / cols);
+
+        var tile = el('div', 'wall__tile wall__tile--' + tier.cls);
+        tile.style.setProperty('--x', ((col + 0.5) * cw + wallSpan(n, 5, -0.3, 0.3) * cw).toFixed(2) + '%');
+        tile.style.setProperty('--y', ((row + 0.5) * ch + wallSpan(n, 7, -0.3, 0.3) * ch).toFixed(2) + '%');
+        tile.style.setProperty('--w', (cw * spread * wallSpan(n, 11, tier.w[0], tier.w[1])).toFixed(2) + '%');
+        tile.style.setProperty('--z', wallSpan(n, 13, tier.z[0], tier.z[1]).toFixed(0) + 'px');
+        tile.style.setProperty('--r', wallSpan(n, 17, -3.4, 3.4).toFixed(2) + 'deg');
+        tile.style.setProperty('--ar', ars[Math.floor(wallRand(n, 19) * ars.length)]);
+
+        var img = el('img');
+        img.alt = '';
+        img.decoding = 'async';
+        /* The field is decoration behind a headline, so the two planes the
+           reader can actually read wait for the near one to land. */
+        img.fetchPriority = tier.cls === 'near' ? 'high' : 'low';
+        img.addEventListener('load', wallLight);
+        img.src = wallStill(film.still, tier.cls === 'near' ? 750 : 500);
+        /* A still already in the HTTP cache can be complete before the
+           listener above is ever called. */
+        if (img.complete) wallLight.call(img);
+        tile.appendChild(img);
+
+        wallPlane.appendChild(tile);
+        if (tier.cls === 'near' && film.video) near.push({ tile: tile, film: film });
+      }
+
+      /* Three frames out of twenty-four are running. Any more and the wall
+         stops reading as a wall of stills with something alive in it and
+         starts reading as a video grid — and it would put twelve megabytes
+         behind a paragraph of copy. Touch, reduced motion and a metered
+         connection get the stills alone. */
+      if (!wide || reduceMotion || noHover || wallSave) return;
+      near.slice(0, 3).forEach(function (spot) {
+        var v = reel('', spot.film.still);
+        spot.tile.appendChild(v);
+        v.addEventListener('playing', function () { v.classList.add('is-on'); });
+        wallReels.push({ el: v, src: spot.film.video });
+        playReel(v, spot.film.video);
+      });
+    }
+
+    buildWall();
+    /* The tile count is a layout decision, so it is re-made when the layout
+       changes rather than being left at whatever the first paint chose. */
+    if (wallWide.addEventListener) wallWide.addEventListener('change', buildWall);
+
+    /* Nothing decodes while the wall is off screen — the same bargain the
+       homepage hero strikes with its reel. */
+    if ('IntersectionObserver' in window && wall) {
+      var wallIO = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          wallReels.forEach(function (r) {
+            if (en.isIntersecting) playReel(r.el, r.src);
+            else r.el.pause();
+          });
+        });
+      }, { threshold: 0.01 });
+      wallIO.observe(wall);
+    }
+
+    /* The wall turns toward the cursor, and arrives after it — the swing is
+       small and the transition is long, so it reads as weight rather than as
+       a thing following the mouse. The base angles live in the stylesheet;
+       this only leans against them. */
+    if (wall && !reduceMotion && !noHover) {
+      var leanPending = false;
+      var leanX = 0;
+      var leanY = 0;
+
+      wall.addEventListener('pointermove', function (e) {
+        if (e.pointerType === 'touch') return;
+        var r = wall.getBoundingClientRect();
+        leanX = (e.clientX - r.left) / r.width - 0.5;
+        leanY = (e.clientY - r.top) / r.height - 0.5;
+        if (leanPending) return;
+        leanPending = true;
+        requestAnimationFrame(function () {
+          leanPending = false;
+          wallPlane.style.setProperty('--wall-y', (12 + leanX * 9).toFixed(2) + 'deg');
+          wallPlane.style.setProperty('--wall-x', (7 - leanY * 6).toFixed(2) + 'deg');
+        });
+      });
+
+      /* Hands back to the stylesheet's own angles rather than to zero. */
+      wall.addEventListener('pointerleave', function () {
+        wallPlane.style.removeProperty('--wall-x');
+        wallPlane.style.removeProperty('--wall-y');
+      });
     }
   }
 
