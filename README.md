@@ -236,10 +236,10 @@ distinctions, so Turkish orthography is restored here — `KILICARSLAN` is store
 Kılıçarslan, `SAHIN` as Şahin. Six surnames are genuinely ambiguous from caps alone
 and are marked `// ??` in `films.js`; check those against the crew before launch.
 
-**The other twenty films are placeholders.** Nine crew lines each, generated at the
-bottom of `films.js` from a rotating pool — none of those people worked on those films.
-Replace them before launch. A film that already has its own `credits` is skipped by the
-generator; delete a role line and the list reflows.
+**The other twenty films carry no credits.** No invented names: an entry without a
+`credits` array prints no Crew section at all, and the same holds for `cast` and
+`alsoCredited`. Add the array to the entry in `films.js` when its roll arrives and the
+section appears; delete a role line and the list reflows.
 
 ## Data
 

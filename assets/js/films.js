@@ -4,8 +4,9 @@
    and the client small (see README). No years are invented — add a `year` field
    to any entry and the UI will render it.
 
-   Four films carry real credits (see CREDITS below); the rest still run on
-   PLACEHOLDER NAMES — swap those before this goes anywhere near production. */
+   Only the films we hold a delivered credit roll for carry crew and cast
+   (see CREDITS below). The rest carry none — a film with no roll prints no
+   crew section rather than invented names. */
 
 const CDN = 'https://images.squarespace-cdn.com/content/v1/6800c8341300e144920e7dc1';
 
@@ -60,8 +61,8 @@ Object.keys(FILE).forEach(function (k) {
 
 /* ---- Real credits ----------------------------------------------------
    Transcribed from the delivered credit rolls (metadata.txt). These are
-   the only films we hold real crew for; everything else still falls back
-   to the placeholder pool at the bottom of this file.
+   the only films we hold real crew for; every other entry ships without
+   a crew block until its roll arrives.
 
    The source rolls are set in caps, as credit rolls are. They're stored
    title-cased here to sit in the same voice as the rest of the site, with
@@ -382,43 +383,6 @@ window.APOLLO_FILMS = [
     video: REEL.penti
   }
 ];
-
-/* ---- Fallback crew ----------------------------------------------------
-   PLACEHOLDER NAMES. Invented for layout purposes only — none of these
-   people worked on these films. Replace with the real crew, or delete a
-   role line entirely and the section reflows.
-
-   This only fills the films we have no roll for. Mirage, Constanze in
-   Istanbul and both La Casa entries already carry `credits` from
-   CREDITS above, and the loop below leaves them alone. */
-
-const ROLES = [
-  'Direction',
-  'Producer',
-  'Executive Producer',
-  'Director of Photography',
-  'Editor',
-  'Colour',
-  'Production Design',
-  'Styling',
-  'Sound'
-];
-
-const NAMES = [
-  'Selin Aydar', 'Mert Kavaslar', 'Deniz Orhun', 'Elif Tanrıöver',
-  'Kaan Berkî', 'Nil Sarıgül', 'Emre Vardar', 'Yasemin Koral',
-  'Ada Türkmen', 'Barış Ünsal', 'Leyla Mercan', 'Cem Aksoy',
-  'Işıl Demirtaş', 'Onur Bayrak', 'Zeynep Alkan', 'Tuna Erdoğdu',
-  'Melis Yavuz', 'Kerem Salman', 'Defne Ilgaz', 'Sarp Öztürk',
-  'Ece Balaban', 'Utku Şenoğlu', 'Pınar Direk', 'Görkem Aslan'
-];
-
-window.APOLLO_FILMS.forEach(function (film, i) {
-  if (film.credits) return;
-  film.credits = ROLES.map(function (role, r) {
-    return { role: role, name: NAMES[(i * 7 + r * 5) % NAMES.length] };
-  });
-});
 
 /* Each entry's full cut is the same file on the media host, so it is derived
    from the reel rather than written out twice. Null until FULL is set. */

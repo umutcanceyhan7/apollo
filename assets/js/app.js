@@ -863,9 +863,9 @@
          isn't — see FULL in films.js. */
       player.src = film.full || film.video;
 
-      /* Crew and cast share the role/name grid. Cast only exists on the
-         films we hold a real roll for, so its block stays hidden otherwise
-         rather than printing an empty heading. */
+      /* Crew and cast share the role/name grid. Both only exist on the
+         films we hold a delivered roll for, so each block stays hidden
+         otherwise rather than printing an empty heading. */
       function fillRoles(list, rows) {
         if (!list) return 0;
         (rows || []).forEach(function (c) {
@@ -877,7 +877,10 @@
         return (rows || []).length;
       }
 
-      fillRoles(detail.querySelector('[data-credits]'), film.credits);
+      var crewBlock = detail.querySelector('[data-crew-block]');
+      if (fillRoles(detail.querySelector('[data-credits]'), film.credits) && crewBlock) {
+        crewBlock.hidden = false;
+      }
 
       var castBlock = detail.querySelector('[data-cast-block]');
       if (fillRoles(detail.querySelector('[data-cast]'), film.cast) && castBlock) {
