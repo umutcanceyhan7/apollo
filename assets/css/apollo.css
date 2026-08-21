@@ -271,24 +271,19 @@ a { color: inherit; text-decoration: none; }
    the reason the whole site read as shouting at 1280 and 1440. */
 
 .display {
-  font-size: clamp(38px, 7.6vw, 128px);
+  font-size: clamp(34px, 5.8vw, 92px);
   line-height: 0.88;
   letter-spacing: var(--tight-xl);
   margin: 0;
   text-wrap: balance;
 }
 
-/* A display line that must hold on one line, so it sizes off the viewport
-   rather than a fixed clamp. Below 560px it gives up and wraps — one line
-   at 24px would read as fine print, which is worse than two. */
-.display--line {
-  white-space: nowrap;
-  font-size: min(7vw, 112px);
-}
-
-@media (max-width: 560px) {
-  .display--line { white-space: normal; font-size: clamp(32px, 11vw, 60px); }
-}
+/* One exception, and it is a role rather than a page: the film title is the
+   branded moment of the page it names — one film, set at the size the film
+   is worth — so it keeps the scale the section heads have stepped down from.
+   `data-title` is the hook app.js already writes the title through, so the
+   rule names the thing rather than the file it happens to live in. */
+.display[data-title] { font-size: clamp(38px, 7.6vw, 128px); }
 
 /* The branded moment — 601's carved numerals and wordmarks. */
 .wordmark {
@@ -360,6 +355,13 @@ p { margin: 0; max-width: 58ch; }
    still says the same thing about the rhythm. */
 .band--cream { background: var(--ground-alt); color: var(--ink-alt); }
 .band--tight { padding-top: calc(var(--band) * 0.42); }
+
+/* A dark band that runs straight into the footer pays for the closing gap
+   once. Everywhere else the band above the footer is cream, so that gap is
+   half cream and half black and reads as the last cut; on one black run it
+   is a single hole under the last line, and the page has to taper to its
+   end rather than fall out of one. */
+.band--close { padding-bottom: calc(var(--band) * 0.3); }
 .band--flush { padding-left: 0; padding-right: 0; }
 
 .stack { display: flex; flex-direction: column; gap: 24px; }
@@ -482,7 +484,6 @@ p { margin: 0; max-width: 58ch; }
   padding: var(--gutter);
   overflow: hidden;
   background: var(--ground);
-  border-bottom: var(--hair);
 }
 
 .hero__stage { position: absolute; inset: 0; background: var(--ground); }
@@ -849,8 +850,6 @@ p { margin: 0; max-width: 58ch; }
 .wall__inner .lede { max-width: 38ch; margin: 0 auto; text-wrap: balance; }
 .wall__inner .btn { align-self: center; margin-top: 6px; }
 
-.wall__title { max-width: 15ch; }
-
 /* Sits at the foot of the screen the way a scroll cue does, and scrolls
    away with the band — nothing has to be told to hide it. */
 .wall__scroll {
@@ -1116,6 +1115,49 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 
 .prose { display: flex; flex-direction: column; gap: 24px; max-width: 58ch; }
 
+/* --- the centred block: about only ---------------------------------------
+   `about` opens on `.wall__inner`, the one centred column on the site, and
+   with the display line gone the blocks under it read as a continuation of
+   that axis rather than a return to the left edge. So the exception is the
+   page, not the component: nowhere else centres, and nothing here leaks out
+   of `.midblock`. The measure comes in to 52ch because a centred line is
+   read from a moving left edge and a long one loses it. */
+
+.midblock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+/* One gap for everything is what makes a centred stack float, so the label
+   and the prose it introduces stay tighter than the gap around them. The
+   fact grid takes no extra break of its own — `.factgrid` sets `margin: 0`
+   and nothing overrides it. */
+.midblock .prose { max-width: 52ch; gap: 20px; text-wrap: pretty; margin-top: 12px; }
+
+/* Four facts, and the row count is the viewport's decision rather than a
+   breakpoint's: two up at the block's full measure, one up once a column
+   can no longer hold a value on one line. */
+.factgrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 640px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 36px 48px;
+}
+
+.factgrid li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap);
+}
+
 /* --- links & the one button pattern -------------------------------- */
 
 .link {
@@ -1244,12 +1286,6 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   gap: 0;
 }
 
-/* Where the footer carries contact rows above the bar (about), the two are
-   one run rather than two blocks: the bar's own hairline is what closes the
-   list, so the last row must not draw a second rule above it, and the bar
-   keeps the row rhythm instead of standing off on a section gap. */
-.sitefooter .credits li:last-child { border-bottom: 0; }
-
 .sitefooter__bar {
   display: flex;
   justify-content: space-between;
@@ -1274,11 +1310,6 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 
 .sitefooter__bar > .label { opacity: var(--o-nav); }
 .sitefooter__bar a.label:hover { opacity: 1; }
-
-/* --- fact row ------------------------------------------------------------ */
-
-.factrow { display: flex; gap: 24px 64px; flex-wrap: wrap; }
-.factrow > div { display: flex; flex-direction: column; gap: var(--gap); }
 
 /* --- credits ------------------------------------------------------------ */
 
@@ -1357,11 +1388,6 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 }
 .is-in .split__w { transform: none; }
 
-/* A row of facts lands left to right, one after the other. */
-.factrow > [data-reveal]:nth-child(2) { transition-delay: 0.09s; }
-.factrow > [data-reveal]:nth-child(3) { transition-delay: 0.18s; }
-.factrow > [data-reveal]:nth-child(4) { transition-delay: 0.27s; }
-
 /* The label column holds while its prose scrolls past — the editorial
    pairing stays legible instead of scrolling off the top. */
 @media (min-width: 900px) {
@@ -1418,6 +1444,17 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 
   .filmnav { flex-direction: column; gap: 28px; }
   .filmnav a, .filmnav a:last-child { max-width: 100%; text-align: left; align-items: flex-start; }
+
+  /* The filters are a bullet-separated run on a desktop, the same pattern the
+     nav uses. On a phone that run wraps into ragged half-lines, so it becomes
+     a column instead — and the bullets go with it: a separator at the end of
+     a stacked line separates nothing. The count leaves the right edge for the
+     same reason the nav does, so the whole group holds one left edge, and the
+     rows take vertical padding because a 13px label is not a thumb target. */
+  .filters { flex-direction: column; align-items: flex-start; }
+  .filters button { padding: 6px 0; }
+  .filters button::after { content: none; }
+  .filters__count { margin-left: 0; margin-top: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

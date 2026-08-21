@@ -79,9 +79,9 @@ doesn't leave twenty-four decoded films on a phone. Desktop hover is untouched.
 
 | File | What it is |
 | --- | --- |
-| `index.html` | Hero only — five titles at display scale, hovering one runs that film's reel full-bleed behind them — then the studio note and a one-line CTA |
+| `index.html` | The hero and nothing else: five titles at display scale over one full-bleed reel, hovering a title runs that film's. One screen on a desktop, no footer, no second section — the phone turns the same hero into a scroll track through the five (`.hero--track`). The foot of the screen carries the film's category and client, and `See more` to the archive |
 | `showcase.html` | The catalogue — 24 numbered hairline rows over a pinned reel that swaps on hover, or on scroll-end where there is no hover, filtered by category |
-| `about.html` | Opens on the wall — the catalogue hung in 3D behind the studio's own line — then the studio note, closing into a footer that carries the contact rows |
+| `about.html` | Opens on the wall — the catalogue hung in 3D behind the studio's own line — then the studio note and, in the footer, four facts two up, all on the one centre axis the site otherwise never uses |
 | `contact.html` | Form in the system's type; submitting opens the user's mail client |
 | `film.html?f=<slug>` | Full-bleed player with controls, cast/crew credits, prev/next |
 
@@ -125,6 +125,17 @@ Every page uses the same two motion hooks, both read by `app.js`:
 
 `.columns--sticky` holds the label column while its prose scrolls past, from 900px up.
 
+The observer runs a `-10%` bottom `rootMargin`, so an element is held back until it is
+properly in view rather than merely peeking over the fold. That assumes the page can
+scroll, and one page cannot: once `index.html` became the hero alone it was exactly one
+viewport, and the hero's meta row sat at 839–863 against a root that stopped at 810 —
+permanently outside it, at opacity 0, taking the category, the client and the way to the
+archive with it. The 2.5s fallback does not catch this, because it bails as soon as any
+other element is in. So `startReveals()` makes one load-time pass and marks anything
+already inside the *real* viewport: holding on-screen copy invisible is the failure the
+margin exists to prevent, not one for it to cause. Everything below the fold still waits
+for the observer, and the delays are untouched, so the choreography is unchanged.
+
 Both hooks are gated on `.js` (set by an inline script in each `<head>`), so a page
 without script is fully readable rather than blank, and a 2.5s fallback reveals
 everything if the observer never delivers. Nothing here changes a colour, a size, or a
@@ -149,17 +160,38 @@ Tokens live at the top of `assets/css/apollo.css`.
 | Buttons | 1px hairline outline, 12px / 21px padding, never a fill |
 | Nav | Bullet `•` separators at 21px padding, not dividers |
 | Footer | One row of facts under one hairline — the bar's own rule, and the only one the footer draws. It never repeats a line from the page above it |
-| Non-negotiable | `border-radius: 0`, `box-shadow: none`, no fourth colour, nothing centred |
+| Non-negotiable | `border-radius: 0`, `box-shadow: none`, no fourth colour, nothing centred &mdash; `about` is the one exception, and it is the whole page rather than a component: `.wall__inner` and the two `.midblock`s under it hold a single centre axis. Nowhere else centres |
 
 Two grounds alternate down every page — black and cream — so rhythm comes from
 value, never from colour. This is A24's rule taken literally: the cut between the
-two bands *is* the rhythm, so a third ground only softens it. Every page but one
-closes on a cream band before the black footer, which is the last cut on the way
-out. `about.html` is the exception, and deliberately: it closes black into black,
-so the contact rows in its footer read as the page running out rather than as a
-slab bolted under it. That is why the footer draws no rule of its own — with a
-cream band above, the change of ground already is the divider; with a black one,
-there is nothing to divide.
+two bands *is* the rhythm, so a third ground only softens it. The interior pages
+close on a cream band before the black footer, which is the last cut on the way
+out. Two pages are deliberate exceptions.
+
+`about.html` closes black into black, so the page runs out rather than cutting.
+That is why the footer draws no rule of its own — with a cream band above, the
+change of ground already is the divider; with a black one, there is nothing to
+divide.
+
+`index.html` has no rhythm to keep, because it has no second band: the hero is
+the whole page and it carries no footer. That is also why `.hero` no longer draws
+a bottom hairline — it divided the hero from the band that used to follow it, and
+with nothing under it a rule at the foot of the screen divides nothing. The one
+place the site says anything about itself is now `about`.
+
+That close is a section of `main`, not the footer, and the distinction is the
+whole point: continuity is the ground's job, and sitting inside `<footer>` made
+the facts read as fine print. It carries no heading — the four labels are the
+only thing naming it, which is a deliberate call to keep the page quiet rather
+than an omission. `.band--close` trims the closing band's bottom padding,
+because the footer's own top padding is the other half of that gap and paying it
+twice leaves a hole under the last line.
+
+The four facts sit in `.factgrid`, which takes its row count from the viewport
+rather than from a breakpoint: `auto-fit` at a 240px minimum against a 640px
+measure gives two up wherever the block has its full width, and one up once a
+column can no longer hold a value on one line. It takes no top margin of its
+own; the break above it is the two bands' padding and nothing else.
 All chroma on the site comes from the footage.
 
 ### Where the merge breaks 601 on purpose

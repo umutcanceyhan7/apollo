@@ -793,6 +793,27 @@
     }, { rootMargin: '0px 0px -10% 0px', threshold: 0.06 });
     reveals.forEach(function (n) { revealIO.observe(n); });
 
+    /* The bottom margin above holds an element back until it is properly in
+       view rather than merely peeking, and that assumes the page can scroll.
+       An element sitting in the last tenth of the FIRST screen on a page that
+       cannot scroll never enters that shrunken root and would hold at opacity
+       0 for good — which is what happened to the homepage hero's meta row the
+       moment the hero became the whole page, taking the category, the client
+       and the way to the archive with it. The insurance below does not catch
+       it either: the rows above it are already in, so it bails.
+
+       So anything inside the real viewport at load is in. It is on screen, and
+       holding on-screen copy invisible is the failure the margin exists to
+       prevent, not one for it to cause. The entrance still plays: this runs
+       once the face has landed, and the per-element delays are unchanged. */
+    reveals.forEach(function (n) {
+      var r = n.getBoundingClientRect();
+      if (r.top < window.innerHeight && r.bottom > 0) {
+        n.classList.add('is-in');
+        revealIO.unobserve(n);
+      }
+    });
+
     /* Insurance. The start state hides real copy, so if the observer never
        delivers — an engine that stubs it, a webview that never gives the
        page a rendering opportunity — the page shows itself anyway. A tab
