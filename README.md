@@ -153,7 +153,7 @@ Tokens live at the top of `assets/css/apollo.css`.
 | Type | Space Grotesk, **weight 400 only** — no bold appears anywhere on the site |
 | Tracking | `-0.04em` at every display size; `+0.16em` on uppercase labels |
 | Wordmark | `clamp(72px, 21vw, 280px)` — the branded moment |
-| Display | `clamp(44px, 11vw, 150px)` / line-height `0.88` |
+| Display | `clamp(34px, 5.8vw, 92px)` / line-height `0.88`. One exception: `.display[data-title]`, the film page's own title, holds `clamp(38px, 7.6vw, 128px)` — the section heads stepped down, the branded moment did not |
 | Row numeral | `clamp(38px, 7vw, 110px)`, tabular |
 | Label | 12px uppercase — the one deliberate break from 601 (see below) |
 | Layout | Full-bleed, no max-width. Gutter `clamp(20px, 4vw, 56px)`, section gap `clamp(72px, 10vw, 120px)`, element gap 12px |
