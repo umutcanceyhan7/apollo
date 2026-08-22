@@ -250,7 +250,7 @@ window.APOLLO_FILMS = [
   },
   {
     slug: 'amoreserpente2',
-    title: 'Raisa Vanessa Amore Serpente',
+    title: 'Amore Serpente',
     client: 'Raisa Vanessa',
     category: 'Short Films',
     still: CDN + '/6ab2f744-4c48-475b-9119-d50f8f376e33/Raisa_Vanessa_-_Amore_Serpente_1122243071thumbnail.jpg',
@@ -341,7 +341,7 @@ window.APOLLO_FILMS = [
   },
   {
     slug: 'leija',
-    title: 'Bosphorus Gentlemen Leija',
+    title: 'Leija',
     client: 'Bosphorus Gentlemen',
     category: 'Brand Works',
     still: CDN + '/30fb9bc4-4a00-405b-818c-fb469936ea2a/Leija_1122247732thumbnail.jpg',
@@ -391,6 +391,6 @@ Object.keys(FILE).forEach(function (k) { REEL_TO_CUT[REEL[k]] = CUT[k]; });
 window.APOLLO_FILMS.forEach(function (f) { f.full = REEL_TO_CUT[f.video] || null; });
 
 /* The five titles carried by the homepage index, in order. */
-window.APOLLO_INDEX = ['mirage', 'drole-de-monsieur-ii-leone', 'koton', 'jack-daniels', 'drykorn-midnight-in-vienna'];
+window.APOLLO_INDEX = ['drole-de-monsieur-ii-leone', 'koton', 'jack-daniels', 'drykorn-midnight-in-vienna', 'raisavanessa'];
 
 window.APOLLO_CATEGORIES = ['Brand Works', 'Short Films', 'Trailers'];
