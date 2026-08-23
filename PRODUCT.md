@@ -32,6 +32,12 @@ studio, from the work itself, in one sitting.
 
 ## Product Purpose
 
+The site also carries the studio's behind-the-scenes material — `backstage.html`,
+one horizontal room of photographs with the two cuts set among them, travelled
+sideways rather than scrolled. It was the client's
+own ask, in their words *kamera arkası olsun, çok güzel kontentlerimiz var*, and
+it is the one page built from photography rather than from film.
+
 This site replaces the live apollofilms.co. It carries the full responsibility of the
 studio's public face: win new work, and hold the complete 24 film archive so that any
 single film is reachable, watchable, and credited.

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-archive>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BTS Archive — Apollo Films</title>
+<meta name="description" content="Behind the scenes at Apollo Films — a travelling archive of the floor, the crew, the cameras and the cuts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400&display=swap">
+<link rel="stylesheet" href="assets/css/apollo.css">
+<link rel="stylesheet" href="assets/css/archive.css">
+<meta name="theme-color" content="#060603">
+<!-- The archive is the projection room only. Every other page carries the
+     two grounds and remembers which one you chose; this one is a dark room
+     you travel through, and a paper version of it would be a different idea
+     rather than the same one at another hour. So no theme switch here, and
+     the attribute is never read. -->
+<script>document.documentElement.className += ' js';</script>
+</head>
+<body class="archive-page">
+
+<a class="sr-only" href="#rail">Skip to the archive</a>
+
+<!-- The camera. Everything below travels under the fixed interface. -->
+<div class="archive" id="archive">
+
+  <div class="archive__rail" id="rail" tabindex="-1" role="region"
+       aria-label="Behind the scenes archive. Move the cursor left or right to travel, or use the arrow keys.">
+    <!-- Three planes. Depth is spacing, not scale: each plane is laid out
+         and translated at its own rate, so the far one drifts behind the
+         near one while the frame under the camera stays where it was put.
+         app builds all three; markup only reserves them. -->
+    <div class="plane plane--back" data-plane="back"></div>
+    <div class="plane plane--main" data-plane="main"></div>
+    <div class="plane plane--fore" data-plane="fore"></div>
+  </div>
+
+  <!-- Vignette and grain sit over the material and under the interface, so
+       the edges of the travel fall off rather than stop. -->
+  <div class="archive__veil" aria-hidden="true"></div>
+</div>
+
+<!-- ---- the interface: four corners and a hairline, nothing else ---- -->
+
+<a class="hud hud--tl" href="index.html">Apollo&nbsp;Films</a>
+
+<p class="hud hud--tr">BTS&nbsp;/&nbsp;2026</p>
+
+<div class="hud hud--bl">
+  <span class="hud__here">BTS&nbsp;Archive</span>
+  <nav class="hud__nav" aria-label="Sections">
+    <a href="showcase.html">Showcase</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+</div>
+
+<div class="hud hud--br">
+  <span class="hud__count" data-count>001</span>
+  <span class="hud__of" data-total>/ 073</span>
+</div>
+
+<!-- The only scrollbar there is: a hairline the width of the room, filled
+     to wherever the camera has reached. -->
+<div class="progress" aria-hidden="true"><span class="progress__run" data-progress></span></div>
+
+<!-- Shown once, on arrival. The first pointer move, wheel or key retires it
+     for good — it is a cue, not a caption. -->
+<div class="cue" data-cue aria-hidden="true">
+  <span class="cue__arrow">&#8592;</span>
+  <span class="cue__word">Move your cursor</span>
+  <span class="cue__arrow">&#8594;</span>
+</div>
+
+<!-- Follows the pointer, reports the direction the room is about to move,
+     and names what is under it. Fine pointers only. -->
+<div class="cursor" data-cursor aria-hidden="true"><span class="cursor__mark" data-cursor-mark>&#9679;</span></div>
+
+<!-- The frame the camera opened. It is not a lightbox dropped over the page:
+     the clicked frame is measured where it sits and grows from there into
+     this, and shrinks back into wherever it has since travelled to. -->
+<div class="viewer" data-viewer hidden aria-hidden="true" role="dialog" aria-modal="true" aria-label="Frame">
+  <div class="viewer__ground" data-viewer-ground></div>
+  <figure class="viewer__stage" data-viewer-stage></figure>
+  <button class="viewer__btn viewer__btn--close" type="button" data-viewer-close aria-label="Close frame">Close</button>
+  <button class="viewer__btn viewer__btn--prev" type="button" data-viewer-prev aria-label="Previous frame"><span aria-hidden="true">&#8592;</span></button>
+  <button class="viewer__btn viewer__btn--next" type="button" data-viewer-next aria-label="Next frame"><span aria-hidden="true">&#8594;</span></button>
+  <p class="viewer__meta"><span data-viewer-title></span> <span class="viewer__at" data-viewer-at></span></p>
+</div>
+
+<!-- Data first, engine second. Both are plain scripts; there is no build
+     step on this site and the archive does not introduce one. -->
+<script src="assets/js/backstage.js"></script>
+<script src="assets/js/archive.js"></script>
+</body>
+</html>

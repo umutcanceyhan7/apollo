@@ -41,8 +41,20 @@ jobs:
           mkdir -p _site
           cp *.html _site/
           cp -R assets _site/
+
+          # The behind-the-scenes originals are camera files — up to 5120px,
+          # ~150 MB, delivered over WhatsApp. tools/backstage-prep.mjs writes
+          # the web sizes into assets/backstage/web/ and parks the originals
+          # in _src/; only the derivatives belong on the web. Dropping them
+          # here rather than in .gitignore keeps the masters in the repo,
+          # which is where the studio's own copy of them lives.
+          rm -rf _site/assets/backstage/_src
+          find _site/assets/backstage -maxdepth 1 -type f \
+               \( -name '*.mp4' -o -name '*.jpeg' -o -name '*.jpg' \) -delete
+
           echo "--- staged ---"
           du -sh _site
+          du -sh _site/assets/backstage _site/assets/films
           find _site -maxdepth 2 -type d
 
       # esbuild minifies each file on its own — no bundling. films.js hands the

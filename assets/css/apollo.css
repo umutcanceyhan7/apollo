@@ -381,16 +381,62 @@ p { margin: 0; max-width: 58ch; }
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 18px var(--gutter);
+  /* The bar IS --header-h rather than merely aiming at it. The homepage hero
+     is `100svh - var(--header-h)` and is the entire page, so any drift between
+     the token and the rendered bar puts a scrollbar on a screen built to have
+     none — which is what the brand mark landing in here exposed. Pinning the
+     height makes the token the authority and the contents centre inside it. */
+  height: var(--header-h);
+  box-sizing: border-box;
+  padding: 0 var(--gutter);
   background: var(--ground);
   color: var(--ink);
   border-bottom: var(--hair);
 }
 
+/* The wordmark is the supplied logo, drawn as a mask rather than placed as
+   an image. The file is white on transparent, which would vanish against
+   the contact sheet's paper; as a mask it is a shape, and `currentColor`
+   fills it with whatever ink the mode is using. One asset, both grounds,
+   and the system's "nothing names a colour" rule stays intact.
+
+   The brand name itself stays in the markup as .sr-only text, so a screen
+   reader and a crawler still meet the words rather than an empty link. */
 .masthead__brand {
-  font-size: 15px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  display: block;
+  /* The supplied mark is a stacked lockup at 1400x600, so the box is cut to
+     that 2.33 ratio: `contain` fits by the tighter edge, and a box wider than
+     the ratio would leave the rest of the link as dead area.
+
+     26px is not a taste call, it is the arithmetic: the bar carries 18px of
+     padding top and bottom, and --header-h is 62px, so 26 is the tallest mark
+     that keeps the bar at the height the token promises. The homepage hero is
+     `100svh - var(--header-h)` and is the whole page, so a bar even 5px taller
+     than its token puts a scrollbar on a screen that is meant to have none.
+     A single-line version of the logo would read far better at this height —
+     a stacked lockup has to fit two rows into 26px. */
+  width: 61px;
+  height: 26px;
+  background: currentColor;
+  -webkit-mask: url(../Apollo+Beyaz+Logo.webp) no-repeat left center;
+  mask: url(../Apollo+Beyaz+Logo.webp) no-repeat left center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+/* No mask support: fall back to the wordmark the site shipped with, by
+   un-hiding the text that is otherwise only there for assistive tech. */
+@supports not ((-webkit-mask: url('')) or (mask: url(''))) {
+  .masthead__brand {
+    width: auto; height: auto; background: none;
+    font-size: 15px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .masthead__brand .sr-only {
+    position: static; width: auto; height: auto;
+    margin: 0; overflow: visible; clip: auto;
+  }
 }
 
 /* Everything that is not the wordmark rides in one end group, so the bar

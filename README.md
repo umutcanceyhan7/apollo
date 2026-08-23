@@ -81,6 +81,7 @@ doesn't leave twenty-four decoded films on a phone. Desktop hover is untouched.
 | --- | --- |
 | `index.html` | The hero and nothing else: five titles at display scale over one full-bleed reel, hovering a title runs that film's. One screen on a desktop, no footer, no second section — the phone turns the same hero into a scroll track through the five (`.hero--track`). The foot of the screen carries the film's category and client, and `See more` to the archive |
 | `showcase.html` | The catalogue — 24 numbered hairline rows over a pinned reel that swaps on hover, or on scroll-end where there is no hover, filtered by category |
+| `backstage.html` | The BTS archive — one horizontal room, ~20,000px wide, travelled by pointer position, wheel, arrows or drag. Forty-nine photographs from the floor and the two 9:16 cuts, scored across three depth planes; clicking a frame grows that frame into the viewer |
 | `about.html` | Opens on the wall — the catalogue hung in 3D behind the studio's own line — then the studio note and, in the footer, four facts two up, all on the one centre axis the site otherwise never uses |
 | `contact.html` | Form in the system's type; submitting opens the user's mail client |
 | `film.html?f=<slug>` | Full-bleed player with controls, cast/crew credits, prev/next |
@@ -200,6 +201,215 @@ All chroma on the site comes from the footage.
 it does not work for a 24-film catalogue with categories, clients and filters. So labels
 and secondary text keep A24's small tracked treatment (`.label` at 12px, `.fine` at
 15px), and everything else follows 601. That's the only rule bent.
+
+## Backstage
+
+The client's own material, and the one page on the site built from photographs
+rather than from film. It answers a brief that was three words long — *kamera
+arkası olsun* — and the shape it takes comes from what the material turned out
+to be rather than from what the filenames claimed.
+
+### What the delivery actually was
+
+Eighty-seven images and three videos arrived over WhatsApp. Taken at face value
+that is three shoots on three dates and three videos. It is none of those:
+
+- **The date in the filename is the delivery, not the shoot.** The `2026-05-24`
+  batch is the `2026-04-08` batch sent a second time. WhatsApp re-compresses on
+  every send, so the bytes differ and an md5 pass keeps both copies. The frames
+  are compared on an 8x8 average hash instead, which sees through it — 80 files
+  reduce to 71 distinct photographs.
+- **The batches are not one kind of thing.** `2026-04-08` is photography from
+  the floor: crew, camera, cast between takes. `2026-05-25` is finished key art
+  for Mirage, La Casa De Raisa Vanessa, Il Leone and Summer Lovers. Passing
+  those off as behind-the-scenes would be the one dishonest thing on the page,
+  so they are classified as their own strip — and the archive does not hang
+  that strip at all (see below).
+- **Two of the three videos are one video.** Same 68s cut at two bitrates.
+- **One "photograph" is a phone screenshot** of the site open inside Instagram's
+  in-app browser, address bar and all. It is excluded by name in the generator.
+
+### One room, travelled sideways
+
+The page is not a document. The viewport is a camera, the page itself is fixed
+in both axes, and the material moves under it — one very wide horizontal
+composition holding all forty-nine photographs and both cuts, about 20,000px
+across on a laptop.
+
+The pointer sets a *speed*, not a place. Horizontal position across the
+viewport maps through a squared curve to a target velocity: the middle 14% is
+a dead zone that does not move at all, and everything past it accelerates to a
+top speed of 32px a frame at the very edge. The camera eases into that target
+rather than taking it, so it has weight — about a third of a second to reach a
+pace and as long again to give it up, which is what makes returning the cursor
+to the centre a settle instead of a stop. Wheel, trackpad and shift-wheel add
+an impulse into the same momentum rather than being a second way of setting
+position; arrow keys hold a slower one; a phone drags the room directly and
+throws it on release.
+
+The easing is framerate-independent — `vel += (want - vel) * (1 - (1 - EASE)^dt)`
+rather than the bare `* EASE`, which would run the camera at double speed on a
+120Hz panel.
+
+### The composition is scored, not scattered
+
+Fifty frames placed by a random number generator is the *"infinite masonry
+reel wall"* this project rejects by name — the scatter has to be furniture.
+`assets/js/archive.js` opens with a score: twelve beats, each a run of columns,
+each column one or two frames, written as fractions of the band height.
+
+    { after: 0.34, cols: [
+      { items: [ { h: 0.29, cy: 0.27 }, { h: 0.29, cy: 0.73 } ] },
+      { gap: 0.16, items: [ { h: 0.62, cy: 0.47 } ] } ] },
+
+`h` is the frame's height against the band, `cy` where its centre sits in it,
+`gap` the space before a column — negative to overlap the one before — and
+`after` the breath left at the end of the beat. The beats run in order and
+repeat, and the stills are dealt into them in the order they were shot, so the
+archive reads as a walk past a wall someone hung. Everything about the
+composition is those numbers; there is nothing else to edit. A phone gets its
+own six-beat score, half the stills and both cuts, because the desktop
+composition arrives on a 375px screen as a smear.
+
+The one thing the score does not decide is a cut's size: a film is always
+0.86 of the band whatever slot it lands in, and is given a fifth of a band of
+air on either side. It is the event in its stretch of the archive, and an
+event with a photograph lapped over its corner is not one.
+
+### Three planes, and what parallax is allowed to be
+
+Depth is carried by the plane, not the frame. A frame's on-screen offset from
+the camera is `(itsX - cameraX) * factor`, at 0.9, 1 and 1.08 — which is not
+the same as translating a layer at a different rate, and the difference is the
+whole point. Under this arrangement the frame the camera is actually looking at
+lands in the same place whichever plane it is on, and only its approach and
+departure differ. A layer translated at 0.9 with its contents laid out in
+camera space drifts a tenth of the whole archive out of register by the end;
+this cannot.
+
+The far plane sits back in the light as well as in the movement, at half
+opacity. That is the entire 3D budget.
+
+### What it costs to run
+
+Three elements are promoted and transformed per frame — the planes. The
+fifty figures inside them are never touched during motion, and everything
+outside a screen and a half of the camera has `visibility: hidden`, so a wall
+of fifty frames costs the compositor the eight that are in the room.
+
+Loading is driven off the same distance test rather than off
+`IntersectionObserver` or native `loading="lazy"`, both of which see a
+transformed container as one element sitting in the viewport and would fetch
+the archive. Arriving at the page costs nine requests. Each frame carries a
+`srcset` of the 640px strip thumb and the 1600px view with `sizes` set to its
+real placed width, so a large frame on a retina screen pulls the view and a
+small one never does.
+
+### How the cuts behave
+
+The two cuts are the largest things in the room and the only things in it that
+move on their own:
+
+- **`preload="none"` and no `src` at all** until the camera is within a screen
+  of them, and paused again the moment they are out of it. Two video decoders
+  running behind an archive is two too many.
+- **No play button and no controls.** They are muted, looped, autoplaying
+  pieces of the composition, and they carry the one caption on the page — a
+  slate with the title and the running time, which no photograph gets.
+- **Clicking one opens it properly**: full size, with controls, with sound,
+  from where it had got to.
+
+### Opening a frame
+
+There is no lightbox in the sense of a panel that appears over the page. The
+clicked frame is measured where it stands, a copy is dropped at exactly those
+coordinates, and that copy is animated to the stage — the photograph is the
+transition. Because the stage preserves the frame's aspect ratio, the whole
+move is a translate and a scale on one element rather than an animated
+`width`/`height`, and the ground fades up behind a frame that is already
+travelling. Closing reverses it into wherever the frame has since got to.
+
+Stepping with the arrows moves the camera to the frame you are looking at, so
+closing puts you where the archive says you are.
+
+### The interface is four corners and a hairline
+
+No masthead, no bands, no theme switch. The archive is the projection room
+only: a paper version of a dark room you travel through would be a different
+idea rather than the same one at another hour, so this is the one page that
+does not carry the two grounds.
+
+Position is reported by a 1px rule along the bottom filled to where the camera
+has reached, and by a count of the frame nearest the middle of the screen. A
+cue — `← MOVE YOUR CURSOR →` — fades in after a second and is retired for good
+by the first pointer move, wheel, key or touch.
+
+Under `prefers-reduced-motion` the pointer stops driving the camera entirely
+and the page falls back to wheel, keys and drag. The travel is the page and
+cannot be removed, but nothing has to move on its own.
+
+
+### The key art lives apart
+
+The 2026-05-25 delivery was not behind-the-scenes at all: it is finished key
+art for eight productions. Those frames are in `assets/posters/`, named after
+the film each belongs to rather than after the day they were sent, with
+`assets/posters/posters.md` as the index — poster, what it shows, the catalogue
+slug it maps to, and the frame it was prepped from.
+
+Every title in that index was read off the poster itself; each carries its own
+title and credit block, so none of it is inferred from a filename. Two things
+in there are judgement rather than fact and are flagged as such: which of the
+near-duplicate catalogue slugs is canonical, and the split between `La Casa De
+Raisa Vanessa` and `Amore Serpente` — three posters print both names and are
+filed under the second, on the grounds that it is the film they were cut for.
+
+A strip carries its own `dir`, so a strip's photographs are found without the
+page knowing anything about where they live. `tools/posters-split.mjs` did the
+move and can do it again; it is idempotent in the sense that it only moves what
+is still sitting in the backstage directory.
+
+**The archive does not show them.** Finished key art is not behind the scenes
+of anything, and forty-nine frames from the floor plus the two cuts is the
+material the page is actually about. `archive.js` takes only strips whose `dir`
+sits under `assets/backstage/` — read off the path rather than off the strip's
+id, so a second batch of finished art filed under any name is left out on the
+same grounds. The generator keeps classifying and writing the key art strip,
+`assets/posters/` keeps its 43 derivatives and `posters.md` keeps its index;
+nothing is deleted, and hanging them again is one line.
+
+### The pipeline
+
+Two scripts, run in order, whose output is committed. The site still has no
+build step: this is asset prep, not a build.
+
+```
+node tools/backstage-prep.mjs     # dedupe, slug, resize, encode, park originals
+node tools/backstage-data.mjs     # classify and write assets/js/backstage.js
+```
+
+`backstage-prep` writes two WebP sizes per frame into `assets/backstage/web/` —
+a 640px `-thumb` for the wall and a 1600px `-view` for the opened frame — re-encodes
+the two cuts, pulls a poster from each, and moves every original into
+`assets/backstage/_src/`. It is idempotent: a second run only picks up what is
+new, and it moves originals rather than deleting them.
+
+The weights are the point. 106 MB of camera files at up to 5120px become 3.3 MB
+of thumbnails, and a visitor pays for fewer than ten of those on arrival: the
+views load one at a time as a frame is opened, and the cuts carry
+`preload="none"` so 18 MB of video costs nothing until the camera reaches one.
+
+`_src` is gitignored on the same argument as the film masters, and the deploy
+drops it from `_site` as a second line of defence. The derivatives are what the
+web needs and all it needs.
+
+### Set titles
+
+`backstage-data.mjs` declares at the top of the file which delivery batches carry
+which kind of material — the floor photography and the key art — and the order
+they run in. That is also where a frame is excluded by name. Change it there and
+re-run; the generated `assets/js/backstage.js` is also safe to hand-edit, since
+the page reads it directly and nothing sits between them.
 
 ## Local footage
 

@@ -7,5 +7,12 @@
 # reels the site actually needs in the repo.
 /assets/films/*.mp4
 
+# The behind-the-scenes originals, on the same argument: ~150 MB of camera
+# files and WhatsApp-delivered masters at up to 5120px. tools/backstage-prep.mjs
+# parks them here and writes the web sizes into assets/backstage/web/, which IS
+# committed — 35 MB of derivatives is what the site needs and all it needs.
+# Keep your own copy of _src; it is the source the derivatives are rebuilt from.
+/assets/backstage/_src/
+
 .DS_Store
 node_modules/
