@@ -20,30 +20,26 @@
 </head>
 <body class="archive-page">
 
-<a class="sr-only" href="#rail">Skip to the archive</a>
+<a class="sr-only" href="#field">Skip to the archive</a>
 
 <!-- The camera. Everything below travels under the fixed interface. -->
 <div class="archive" id="archive">
 
-  <div class="archive__rail" id="rail" tabindex="-1" role="region"
-       aria-label="Behind the scenes archive. Move the cursor left or right to travel, or use the arrow keys.">
-    <!-- Three planes. Depth is spacing, not scale: each plane is laid out
-         and translated at its own rate, so the far one drifts behind the
-         near one while the frame under the camera stays where it was put.
-         app builds all three; markup only reserves them. -->
-    <div class="plane plane--back" data-plane="back"></div>
-    <div class="plane plane--main" data-plane="main"></div>
-    <div class="plane plane--fore" data-plane="fore"></div>
+  <div class="field" id="field" tabindex="-1" role="region"
+       aria-label="Behind the scenes archive. One wall of forty-one photographs and cuts. Drag, scroll or use the arrow keys to move across it.">
+    <!-- One flat wall. app builds every frame into here and places it; the
+         markup reserves nothing, because where a frame goes is composition
+         and not structure. -->
   </div>
 
-  <!-- Vignette and grain sit over the material and under the interface, so
-       the edges of the travel fall off rather than stop. -->
+  <!-- Vignette sits over the material and under the interface, so the edges
+       of the wall fall off rather than stop. -->
   <div class="archive__veil" aria-hidden="true"></div>
 </div>
 
-<!-- ---- the interface: four corners and a hairline, nothing else ---- -->
+<!-- ---- the interface: four corner marks and a map, nothing else ---- -->
 
-<a class="hud hud--tl" href="index.html">Apollo&nbsp;Films</a>
+<a class="hud hud--tl hud--brand" href="index.html"><span class="sr-only">Apollo Films</span></a>
 
 <p class="hud hud--tr">BTS&nbsp;/&nbsp;2026</p>
 
@@ -56,25 +52,31 @@
   </nav>
 </div>
 
+<!-- Names whatever is nearest the middle of the screen. There is no
+     position to report as a fraction on a wall you cross in two directions,
+     so it reports what you are looking at instead of counting at you. -->
 <div class="hud hud--br">
-  <span class="hud__count" data-count>001</span>
-  <span class="hud__of" data-total>/ 073</span>
+  <span class="hud__near" data-near>&nbsp;</span>
+  <span class="hud__of" data-of-count>/ 41</span>
 </div>
 
-<!-- The only scrollbar there is: a hairline the width of the room, filled
-     to wherever the camera has reached. -->
-<div class="progress" aria-hidden="true"><span class="progress__run" data-progress></span></div>
+<!-- The whole wall at a glance. The one element on the page whose job is to
+     say that the archive is FINITE — the frames are painted once, and only
+     the viewport box moves. -->
+<div class="map" aria-hidden="true">
+  <canvas class="map__wall" data-map width="300" height="240"></canvas>
+  <span class="map__view" data-map-view></span>
+</div>
 
 <!-- Shown once, on arrival. The first pointer move, wheel or key retires it
      for good — it is a cue, not a caption. -->
 <div class="cue" data-cue aria-hidden="true">
-  <span class="cue__arrow">&#8592;</span>
-  <span class="cue__word">Move your cursor</span>
-  <span class="cue__arrow">&#8594;</span>
+  <span class="cue__arrow">&#8598;</span>
+  <span class="cue__word">Drag to explore</span>
+  <span class="cue__arrow">&#8600;</span>
 </div>
 
-<!-- Follows the pointer, reports the direction the room is about to move,
-     and names what is under it. Fine pointers only. -->
+<!-- Follows the pointer, names what is under it. Fine pointers only. -->
 <div class="cursor" data-cursor aria-hidden="true"><span class="cursor__mark" data-cursor-mark>&#9679;</span></div>
 
 <!-- The frame the camera opened. It is not a lightbox dropped over the page:

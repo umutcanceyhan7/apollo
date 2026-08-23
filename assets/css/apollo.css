@@ -111,7 +111,7 @@
   --gutter: clamp(20px, 4vw, 56px);
   --band: clamp(72px, 10vw, 120px);   /* 601 section gap */
   --gap: 12px;                        /* 601 element gap */
-  --header-h: 62px;
+  --header-h: 80px;
 
   /* Tracking is a function of size, not a constant. -0.04em is calibrated
      for the carved sizes it was drawn for; carried down to a 22px credit
@@ -408,15 +408,15 @@ p { margin: 0; max-width: 58ch; }
      that 2.33 ratio: `contain` fits by the tighter edge, and a box wider than
      the ratio would leave the rest of the link as dead area.
 
-     26px is not a taste call, it is the arithmetic: the bar carries 18px of
-     padding top and bottom, and --header-h is 62px, so 26 is the tallest mark
-     that keeps the bar at the height the token promises. The homepage hero is
-     `100svh - var(--header-h)` and is the whole page, so a bar even 5px taller
-     than its token puts a scrollbar on a screen that is meant to have none.
-     A single-line version of the logo would read far better at this height —
-     a stacked lockup has to fit two rows into 26px. */
-  width: 61px;
-  height: 26px;
+     44px is arithmetic, not taste: the bar carries 18px of padding top and
+     bottom, and --header-h is 80px, so 44 is the tallest mark that keeps the
+     bar at the height the token promises. The two move together — a stacked
+     lockup needs the height to be legible at all, so growing the mark means
+     growing the token. The homepage hero is `100svh - var(--header-h)` and is
+     the whole page, so a bar even 5px taller than its token puts a scrollbar
+     on a screen that is meant to have none. */
+  width: 103px;
+  height: 44px;
   background: currentColor;
   -webkit-mask: url(../Apollo+Beyaz+Logo.webp) no-repeat left center;
   mask: url(../Apollo+Beyaz+Logo.webp) no-repeat left center;
@@ -1451,7 +1451,10 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 }
 
 @media (max-width: 780px) {
-  :root { --header-h: 58px; }
+  :root { --header-h: 70px; }
+
+  /* Same arithmetic one size down: 70 minus 2x18 of bar padding is 34. */
+  .masthead__brand { width: 80px; height: 34px; }
 
   .masthead__nav {
     display: none;

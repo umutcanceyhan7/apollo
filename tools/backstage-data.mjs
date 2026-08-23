@@ -1,32 +1,24 @@
 #!/usr/bin/env node
-/* Apollo Films — turn the prepped frames into the page's data file.
+/* Apollo Films — turn the prepped material into the page's data file.
 
        node tools/backstage-data.mjs        # writes assets/js/backstage.js
 
-   Run after tools/backstage-prep.mjs. Reads the derivatives in
-   assets/backstage/web/, works out what is actually in them, and writes
-   assets/js/backstage.js the way films.js is written: one hand-readable
-   data file the page reads, with no build step between it and the browser.
+   Run after tools/backstage-prep.mjs.
 
-   Two things the prep pass could not know, both learned by looking at the
-   material rather than at the filenames:
+   ONE WALL, NOT EIGHT GALLERIES. The prep pass groups the masters by the
+   production they came from, because that is what their filenames say and it
+   is how the material has to be FILED. The archive does not show them that
+   way. It is one mixed wall of behind-the-scenes work with every production
+   on it at once, and a production's name is a fact about a photograph rather
+   than a place it lives — Mirage turns up in five different corners of the
+   wall, and Shopigo's single frame is simply part of the composition instead
+   of a lonely gallery of one.
 
-   1. The date in a WhatsApp filename is the DELIVERY date, not the shoot.
-      The 2026-05-24 batch is the 2026-04-08 batch sent a second time, and
-      WhatsApp re-compresses on every send, so the bytes differ and an md5
-      pass keeps both copies. Frames are compared here on an 8x8 average
-      hash instead, which sees through the recompression.
+   So this pass FLATTENS what prep filed. It emits one pool of frames and one
+   pool of cuts, each carrying the production it belongs to, and hands the
+   composition to assets/js/archive.js — which lays the wall out and
+   deliberately keeps frames of the same production apart. */
 
-   2. The batches are not one kind of thing. 2026-04-08 is photography from
-      the floor — crew, camera, talent. 2026-05-25 is finished key art:
-      Mirage, La Casa De Raisa Vanessa, Il Leone, Summer Lovers. Those are
-      worth showing and worth labelling honestly, so they are their own
-      strip rather than being passed off as behind-the-scenes.
-
-   Set titles are the one thing left to a human. They are declared just
-   below; edit them there and re-run, or edit the generated file directly. */
-
-import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -34,129 +26,90 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const WEB = path.join(ROOT, 'assets', 'backstage', 'web');
 const OUT = path.join(ROOT, 'assets', 'js', 'backstage.js');
 
-/* Which delivery batch is which kind of material, and what each strip is
-   called on the page. Add a batch here when new material arrives. */
-const STRIPS = [
-  {
-    id: 'floor',
-    dir: 'assets/backstage/web/',
-    title: 'On the floor',
-    note: 'Crew, camera and cast between takes.',
-    batches: ['2026-04-08', '2026-05-24']
-  },
-  {
-    /* Lifted into its own directory and renamed after the films by
-       tools/posters-split.mjs — see assets/posters/posters.md. Re-running
-       this generator rebuilds the strip from the raw batch names, so run
-       posters-split.mjs after it to restore the poster names. */
-    id: 'keyart',
-    dir: 'assets/posters/',
-    title: 'Key art',
-    note: 'Posters cut for the films.',
-    batches: ['2026-05-25']
-  }
-];
-
-/* Frames to leave out, with the reason. `-22` is a phone screenshot of the
-   site open inside Instagram's in-app browser — status bar, address bar and
-   all — rather than a photograph. */
-const EXCLUDE = new Set(['2026-05-25-22']);
-
-function aHash(file) {
-  const buf = execFileSync('ffmpeg', [
-    '-v', 'error', '-i', file, '-vf', 'scale=8:8,format=gray', '-f', 'rawvideo', '-'
-  ], { maxBuffer: 1 << 20 });
-  const px = [...buf.subarray(0, 64)];
-  const avg = px.reduce((a, b) => a + b, 0) / 64;
-  let bits = 0n;
-  px.forEach((v, i) => { if (v > avg) bits |= (1n << BigInt(i)); });
-  return bits;
-}
-
-const hamming = (a, b) => {
-  let x = a ^ b, c = 0;
-  while (x) { c += Number(x & 1n); x >>= 1n; }
-  return c;
-};
-
 const manifest = JSON.parse(fs.readFileSync(path.join(WEB, 'manifest.json'), 'utf8'));
-const byBatch = new Map(manifest.sets.map((s) => [s.shoot, s.shots]));
 
 console.log('— backstage data —\n');
 
-const strips = [];
-const kept = [];   /* running list of hashes, so a later batch cannot repeat an earlier one */
+const L = [];
+const p = (s) => L.push(s);
 
-for (const strip of STRIPS) {
-  const shots = [];
-  for (const batch of strip.batches) {
-    for (const shot of byBatch.get(batch) ?? []) {
-      if (EXCLUDE.has(shot.slug)) continue;
-      const h = aHash(path.join(WEB, `${shot.slug}-thumb.webp`));
-      /* <= 4 bits apart is the same photograph through a second round of
-         WhatsApp compression; anything looser starts eating real frames. */
-      if (kept.some((k) => hamming(k, h) <= 4)) continue;
-      kept.push(h);
-      shots.push({ slug: shot.slug, w: shot.w, h: shot.h });
-    }
+p(`/* Apollo Films — behind the scenes.`);
+p(`   Generated by tools/backstage-data.mjs. Safe to hand-edit: the page`);
+p(`   reads this file directly and there is no build step between them.`);
+p(``);
+p(`   ONE WALL. Every frame and both cuts are in one flat pool here, each`);
+p(`   carrying the production it came from. \`of\` is a LABEL and not a`);
+p(`   location: the archive is a single mixed wall, and archive.js deals`);
+p(`   these out across it deliberately keeping same-production frames apart,`);
+p(`   so Mirage turns up in several corners rather than in a Mirage corner.`);
+p(``);
+p(`   Every frame ships at two sizes: a 640px -thumb for the wall and a`);
+p(`   1600px -view for the opened frame. A frame with a \`tall\` block was`);
+p(`   delivered cropped twice — the wide crop is the default and the tall one`);
+p(`   is what a phone gets. */`);
+p(``);
+p(`const BS = 'assets/backstage/web/';`);
+p(``);
+p(`window.APOLLO_BACKSTAGE = {`);
+p(``);
+p(`  /* Title and catalogue slug per production, for the one label the wall`);
+p(`     carries: the name of whatever the cursor is over. */`);
+p(`  films: {`);
+manifest.clusters.forEach((c, i) => {
+  const tail = i === manifest.clusters.length - 1 ? '' : ',';
+  p(`    '${c.id}': { title: ${JSON.stringify(c.title)}, film: ${c.film ? `'${c.film}'` : 'null'} }${tail}`);
+});
+p(`  },`);
+p(``);
+
+const cuts = manifest.clusters.filter((c) => c.cut);
+p(`  /* The cuts. The largest things on the wall and the only ones that move`);
+p(`     on their own. Neither is attached until the camera is near it. */`);
+p(`  cuts: [`);
+cuts.forEach((c, i) => {
+  const cut = c.cut;
+  p(`    {`);
+  p(`      of: '${c.id}',`);
+  p(`      src: BS + '${cut.slug}.mp4',`);
+  p(`      poster: BS + '${cut.slug}-poster.webp',`);
+  p(`      ratio: ${cut.w} / ${cut.h},`);
+  p(`      seconds: ${cut.seconds}${cut.wide ? ',' : ''}`);
+  if (cut.wide) {
+    p(`      /* The same edit at 16:9, for a room with the width to take it. */`);
+    p(`      wide: {`);
+    p(`        src: BS + '${cut.slug}-desktop.mp4',`);
+    p(`        poster: BS + '${cut.slug}-desktop-poster.webp',`);
+    p(`        ratio: ${cut.wide.w} / ${cut.wide.h}`);
+    p(`      }`);
   }
-  strips.push({ ...strip, shots });
-  console.log(`  ${strip.id.padEnd(7)} ${String(shots.length).padStart(3)} frames  (${strip.title})`);
-}
+  p(`    }${i === cuts.length - 1 ? '' : ','}`);
+});
+p(`  ],`);
+p(``);
 
-const dropped = manifest.sets.reduce((n, s) => n + s.shots.length, 0)
-  - strips.reduce((n, s) => n + s.shots.length, 0);
-console.log(`\n  ${dropped} dropped as repeats or non-photographs`);
-
-/* ---- emit ---- */
-
-const lines = [];
-lines.push(`/* Apollo Films — behind the scenes.`);
-lines.push(`   Generated by tools/backstage-data.mjs. Safe to hand-edit: the page`);
-lines.push(`   reads this file directly and there is no build step between them.`);
-lines.push(`   Re-running the generator overwrites it, so move a hand edit into`);
-lines.push(`   STRIPS at the top of that script if you want it to survive.`);
-lines.push(``);
-lines.push(`   Paths are relative to the page. Every frame ships in two sizes: a`);
-lines.push(`   640px -thumb for the strip and a 1600px -view for the lightbox, so`);
-lines.push(`   a page of eighty frames costs eighty thumbnails, not eighty photos. */`);
-lines.push(``);
-lines.push(`const BS = 'assets/backstage/web/';`);
-lines.push(``);
-lines.push(`window.APOLLO_BACKSTAGE = {`);
-lines.push(``);
-lines.push(`  /* The two cuts, both 9:16 with sound — they were made for a phone.`);
-lines.push(`     Neither is attached until it is asked for; see app.js. */`);
-lines.push(`  films: [`);
-for (const f of manifest.films) {
-  lines.push(`    {`);
-  lines.push(`      slug: '${f.slug}',`);
-  lines.push(`      title: ${JSON.stringify(f.title)},`);
-  lines.push(`      seconds: ${f.seconds},`);
-  lines.push(`      src: BS + '${f.slug}.mp4',`);
-  lines.push(`      poster: BS + '${f.slug}-poster.webp'`);
-  lines.push(`    }${f === manifest.films.at(-1) ? '' : ','}`);
-}
-lines.push(`  ],`);
-lines.push(``);
-lines.push(`  strips: [`);
-for (const s of strips) {
-  lines.push(`    {`);
-  lines.push(`      id: '${s.id}',`);
-  lines.push(`      dir: '${s.dir}',`);
-  lines.push(`      title: ${JSON.stringify(s.title)},`);
-  lines.push(`      note: ${JSON.stringify(s.note)},`);
-  lines.push(`      shots: [`);
-  for (const sh of s.shots) {
-    lines.push(`        { s: '${sh.slug}', w: ${sh.w}, h: ${sh.h} },`);
+const shots = [];
+for (const c of manifest.clusters) for (const sh of c.shots) shots.push({ ...sh, of: c.id });
+p(`  /* Every frame on the wall, filed by production. The ORDER here is the`);
+p(`     order they were delivered in and nothing more — archive.js re-deals`);
+p(`     them before it places any of them. */`);
+p(`  shots: [`);
+shots.forEach((sh, i) => {
+  const tail = i === shots.length - 1 ? '' : ',';
+  if (sh.tall) {
+    p(`    { s: '${sh.slug}', of: '${sh.of}', w: ${sh.w}, h: ${sh.h},`);
+    p(`      tall: { w: ${sh.tall.w}, h: ${sh.tall.h} } }${tail}`);
+  } else {
+    p(`    { s: '${sh.slug}', of: '${sh.of}', w: ${sh.w}, h: ${sh.h} }${tail}`);
   }
-  lines[lines.length - 1] = lines.at(-1).replace(/,$/, '');
-  lines.push(`      ]`);
-  lines.push(`    }${s === strips.at(-1) ? '' : ','}`);
-}
-lines.push(`  ]`);
-lines.push(`};`);
-lines.push(``);
+});
+p(`  ]`);
+p(`};`);
+p(``);
 
-fs.writeFileSync(OUT, lines.join('\n'));
+fs.writeFileSync(OUT, L.join('\n'));
+
+for (const c of manifest.clusters) {
+  console.log(`  ${c.id.padEnd(14)} ${String(c.shots.length).padStart(3)} frames${c.cut ? '  + cut' : ''}`);
+}
+console.log(`\n  ${shots.length} frames and ${cuts.length} cuts, onto one wall`);
 console.log(`\nwrote assets/js/backstage.js`);

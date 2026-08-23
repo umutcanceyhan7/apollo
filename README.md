@@ -81,7 +81,7 @@ doesn't leave twenty-four decoded films on a phone. Desktop hover is untouched.
 | --- | --- |
 | `index.html` | The hero and nothing else: five titles at display scale over one full-bleed reel, hovering a title runs that film's. One screen on a desktop, no footer, no second section — the phone turns the same hero into a scroll track through the five (`.hero--track`). The foot of the screen carries the film's category and client, and `See more` to the archive |
 | `showcase.html` | The catalogue — 24 numbered hairline rows over a pinned reel that swaps on hover, or on scroll-end where there is no hover, filtered by category |
-| `backstage.html` | The BTS archive — one horizontal room, ~20,000px wide, travelled by pointer position, wheel, arrows or drag. Forty-nine photographs from the floor and the two 9:16 cuts, scored across three depth planes; clicking a frame grows that frame into the viewer |
+| `backstage.html` | The BTS archive — one horizontal room, ~20,000px wide, travelled by pointer position, wheel, arrows or drag. Forty-nine photographs from the floor and the two BTS cuts, scored across three depth planes; clicking a frame grows that frame into the viewer |
 | `about.html` | Opens on the wall — the catalogue hung in 3D behind the studio's own line — then the studio note and, in the footer, four facts two up, all on the one centre axis the site otherwise never uses |
 | `contact.html` | Form in the system's type; submitting opens the user's mail client |
 | `film.html?f=<slug>` | Full-bleed player with controls, cast/crew credits, prev/next |
@@ -318,6 +318,13 @@ move on their own:
   slate with the title and the running time, which no photograph gets.
 - **Clicking one opens it properly**: full size, with controls, with sound,
   from where it had got to.
+- **The aspect follows the viewport where a cut was delivered in two.** La Casa
+  came as a 9:16 master and a 16:9 version of the same edit; under 760px the
+  room gets the tall one, at or above it the wide one, and the frame is drawn
+  and the source attached at whichever it was given. Mirage came 9:16 only and
+  plays tall everywhere. The choice is made at layout, so turning a phone
+  changes the cut along with the composition, and only ever one of the two is
+  fetched.
 
 ### Opening a frame
 
@@ -391,13 +398,17 @@ node tools/backstage-data.mjs     # classify and write assets/js/backstage.js
 `backstage-prep` writes two WebP sizes per frame into `assets/backstage/web/` —
 a 640px `-thumb` for the wall and a 1600px `-view` for the opened frame — re-encodes
 the two cuts, pulls a poster from each, and moves every original into
-`assets/backstage/_src/`. It is idempotent: a second run only picks up what is
+`assets/backstage/_src/`. A cut delivered in two aspects gets both encoded: the
+9:16 master under its own slug and the 16:9 version as `<slug>-desktop.mp4`, named
+in `FILMS` at the top of the script. It is idempotent: a second run only picks up what is
 new, and it moves originals rather than deleting them.
 
 The weights are the point. 106 MB of camera files at up to 5120px become 3.3 MB
 of thumbnails, and a visitor pays for fewer than ten of those on arrival: the
 views load one at a time as a frame is opened, and the cuts carry
 `preload="none"` so 18 MB of video costs nothing until the camera reaches one.
+La Casa ships at both aspects, but a viewport is only ever given one of them, so
+what a visitor can be asked for is still those 18 MB and not the 29 MB committed.
 
 `_src` is gitignored on the same argument as the film masters, and the deploy
 drops it from `_site` as a second line of defence. The derivatives are what the

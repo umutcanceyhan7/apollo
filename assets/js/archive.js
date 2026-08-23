@@ -1,15 +1,25 @@
 /* ============================================================
-   Apollo Films — the BTS archive engine.
+   Apollo Films — the BTS archive.
 
-   The camera, the composition and the frame that opens. Three things,
-   in that order, in one file with no dependencies and no build step —
-   the rest of this site is plain scripts and this page does not get to
-   introduce a toolchain for one page's sake.
+   ONE WALL. Not eight galleries, not a strip, not a grid: a single finite
+   rectangle of behind-the-scenes material that the visitor moves a camera
+   across. Every production is on it at once and they are deliberately MIXED
+   — Mirage turns up in five different corners rather than in a Mirage
+   corner, and Shopigo's one frame is simply part of the composition instead
+   of a lonely gathering of one. A production's name is a fact about a
+   photograph here, never a place it lives.
 
-   The whole page is one transform per plane per frame. Nothing here
-   ever writes `left`, `top`, `width` or `height` during motion; those
-   are written once at layout and again on resize, and everything in
-   between is `translate3d` on three elements.
+   The wall is FINITE and it is meant to feel finite. Two and a half screens
+   across, two down, the camera clamped to it, and a map in the corner that
+   shows the whole thing at once. An infinite coordinate system would make
+   the archive feel larger; it would also make it feel empty, and there are
+   forty-one things on this wall, not four hundred.
+
+   Almost all motion comes from the visitor. The wall itself is still: a
+   frame settles into place the first time the camera brings it properly into
+   view and then stays where it was put, and the only other movement is the
+   small lean a frame gives the cursor. Nothing drifts on its own — this is a
+   wall, not a screensaver.
 
    Reads window.APOLLO_BACKSTAGE (assets/js/backstage.js).
    ============================================================ */
@@ -18,516 +28,764 @@
   'use strict';
 
   var DATA = window.APOLLO_BACKSTAGE;
-  var rail = document.getElementById('rail');
+  if (!DATA || !DATA.shots || !DATA.shots.length) return;
+
   var room = document.getElementById('archive');
-  if (!DATA || !rail || !room) return;
+  var field = document.getElementById('field');
+  if (!room || !field) return;
 
-  /* Where a frame's two sizes live. A strip carries its own `dir` — the
-     floor is shot material under assets/backstage/web/, the key art is cut
-     posters under assets/posters/ — so the path is a property of the strip
-     and never of this file. The constant is only the fallback for a strip
-     written before that field existed. */
   var BASE = 'assets/backstage/web/';
+  var FILMS = DATA.films || {};
 
-  var planes = {
-    back: rail.querySelector('[data-plane="back"]'),
-    main: rail.querySelector('[data-plane="main"]'),
-    fore: rail.querySelector('[data-plane="fore"]')
-  };
-
-  /* Depth, as a rate. A frame's on-screen offset from the camera is
-     (itsX - cameraX) * factor, which means the frame the camera is looking
-     at lands in the same place whatever plane it is on, and only the
-     approach and the departure differ. That is what keeps the parallax a
-     sense of depth rather than a layer sliding out of register. */
-  var DEPTH = { back: 0.9, main: 1, fore: 1.08 };
-
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-  var coarse = window.matchMedia('(hover: none), (pointer: coarse)');
+  var reduced = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------------------------------------------------------------
-     1. THE SCORE
-
-     The archive is not scattered by a random number generator; it is
-     scored. Each beat below is a group of columns, each column is one or
-     two frames, and the numbers are the only place the composition
-     lives:
-
-        gap  — space before this column, in units of the band height.
-               Negative means the column overlaps the one before it.
-        h    — frame height, as a fraction of the band.
-        cy   — where its centre sits in the band, 0 top to 1 bottom.
-        p    — which plane it hangs on.
-        after— the breath left after the whole beat.
-
-     The beats run in order and repeat, and stills are dealt into them in
-     the order they were shot, so the archive reads as a walk past a wall
-     someone hung rather than a shuffle. Change a number here and the
-     composition changes; there is nothing else to edit.
+     1. NUMBERS
      --------------------------------------------------------------- */
 
-  var BEATS = [
-    /* Arrival. One frame, alone, and a silence after it — the first thing
-       the room says is that it has room. */
-    { after: 0.30, cols: [ { items: [ { h: 0.86, cy: 0.50 } ] } ] },
+  /* How big the wall is, in screens. Deliberately modest: the whole point is
+     that a visitor can hold the entire archive in their head after a minute
+     of moving around it. */
+  var WALL_W = 2.5, WALL_H = 2.0;
+  var WALL_W_SMALL = 2.4, WALL_H_SMALL = 2.6;
 
-    /* A low pair with a detail riding above the seam. */
-    { after: 0.22, cols: [
-      { items: [ { h: 0.56, cy: 0.60 } ] },
-      { gap: 0.10, items: [ { h: 0.34, cy: 0.24, p: 'fore' } ] },
-      { gap: -0.05, items: [ { h: 0.70, cy: 0.54 } ] } ] },
+  /* The three scales, as the square root of a frame's AREA rather than as a
+     width. A portrait frame and a landscape frame given the same width do
+     not read as the same size — the portrait one is half again as much
+     picture — and a wall where a frame's weight depends on which way up it
+     was shot looks accidental rather than composed.
 
-    /* A column of two against one tall. The stack is the contact sheet
-       showing through. */
-    { after: 0.26, cols: [
-      { items: [ { h: 0.40, cy: 0.28 }, { h: 0.40, cy: 0.72 } ] },
-      { gap: 0.12, items: [ { h: 0.80, cy: 0.48 } ] } ] },
+     The smallest is set so that even a 2:3 portrait clears 180px across. */
+  var TIER = [308, 250, 212];
+  var TIER_SMALL = [188, 152, 126];
+  var CUT_K = 430, CUT_K_SMALL = 220;
 
-    /* Far wall. One frame on the back plane, dimmer and set back, with air
-       on either side of it. */
-    { after: 0.44, gapBefore: 0.20, cols: [
-      { items: [ { h: 0.44, cy: 0.38, p: 'back' } ] } ] },
+  /* Which scale each frame gets, walked in the order they are dealt. Uneven,
+     no short cycle, and the large ones spaced so a run of three is never the
+     same size twice. */
+  var SCALE = [0, 2, 1, 2, 1, 0, 1, 2, 2, 1, 0, 2, 1, 1, 2, 0, 2, 1, 2, 1];
 
-    /* A tight run — four frames close enough to read as one gesture. */
-    { after: 0.28, cols: [
-      { items: [ { h: 0.48, cy: 0.36 } ] },
-      { gap: 0.04, items: [ { h: 0.36, cy: 0.70 } ] },
-      { gap: 0.03, items: [ { h: 0.60, cy: 0.46 } ] },
-      { gap: 0.05, items: [ { h: 0.34, cy: 0.74, p: 'fore' } ] } ] },
+  var GRAB = 340;   /* how close the cursor is felt, in px */
+  var LIFT = 0.08;  /* how much a frame grows under it */
+  var PULL = 10;    /* how far it leans toward it, in px */
+  var MAXV = 46;
+  var NEAR = 1.1;   /* screens of camera to fetch a frame at */
 
-    /* Two large, overlapping by a hair, on different planes so the overlap
-       reads as one being nearer. */
-    { after: 0.30, cols: [
-      { items: [ { h: 0.74, cy: 0.44 } ] },
-      { gap: -0.08, items: [ { h: 0.62, cy: 0.64, p: 'fore' } ] } ] },
-
-    /* High band. Everything sits above the middle and the floor is empty —
-       which is where a word goes. */
-    { after: 0.24, cols: [
-      { items: [ { h: 0.44, cy: 0.32 } ] },
-      { gap: 0.16, items: [ { h: 0.52, cy: 0.28 } ] },
-      { gap: 0.08, items: [ { h: 0.36, cy: 0.34, p: 'back' } ] } ] },
-
-    /* One big, held. */
-    { after: 0.34, gapBefore: 0.12, cols: [
-      { items: [ { h: 0.84, cy: 0.52 } ] } ] },
-
-    /* A drift down: three frames stepping toward the floor. */
-    { after: 0.26, cols: [
-      { items: [ { h: 0.38, cy: 0.30 } ] },
-      { gap: 0.10, items: [ { h: 0.50, cy: 0.50 } ] },
-      { gap: 0.10, items: [ { h: 0.60, cy: 0.68 } ] } ] },
-
-    /* Stack against stack, close. The densest thing in the room. */
-    { after: 0.34, cols: [
-      { items: [ { h: 0.38, cy: 0.28 }, { h: 0.46, cy: 0.72 } ] },
-      { gap: 0.06, items: [ { h: 0.66, cy: 0.48 } ] },
-      { gap: 0.06, items: [ { h: 0.34, cy: 0.26, p: 'fore' } ] } ] },
-
-    /* Low and wide, with the back plane carrying the far one. The top of
-       the band is left clear. */
-    { after: 0.26, cols: [
-      { items: [ { h: 0.58, cy: 0.66 } ] },
-      { gap: 0.18, items: [ { h: 0.46, cy: 0.62, p: 'back' } ] } ] },
-
-    /* A pause, then a pair either side of the middle. */
-    { after: 0.38, gapBefore: 0.18, cols: [
-      { items: [ { h: 0.50, cy: 0.34 } ] },
-      { gap: 0.08, items: [ { h: 0.50, cy: 0.70 } ] } ] }
-  ];
-
-  /* A phone is a different room. Fewer frames stand up at once, each one is
-     larger against the band, and the breath between beats is longer —
-     otherwise the same composition arrives as a smear. */
-  var BEATS_SMALL = [
-    { after: 0.26, cols: [ { items: [ { h: 0.72, cy: 0.48 } ] } ] },
-    { after: 0.22, cols: [
-      { items: [ { h: 0.46, cy: 0.30 } ] },
-      { gap: 0.08, items: [ { h: 0.54, cy: 0.72 } ] } ] },
-    { after: 0.34, cols: [ { items: [ { h: 0.64, cy: 0.56, p: 'back' } ] } ] },
-    { after: 0.22, cols: [
-      { items: [ { h: 0.50, cy: 0.64 } ] },
-      { gap: 0.06, items: [ { h: 0.40, cy: 0.28, p: 'fore' } ] } ] },
-    { after: 0.36, cols: [ { items: [ { h: 0.76, cy: 0.50 } ] } ] },
-    { after: 0.24, cols: [
-      { items: [ { h: 0.42, cy: 0.30 } ] },
-      { gap: 0.10, items: [ { h: 0.52, cy: 0.68 } ] } ] }
-  ];
-
-  /* ---------------------------------------------------------------
-     THE LINE
-
-     One sentence, broken across the travel and set into the empty bands
-     the score leaves above and below the frames. A reader going sideways
-     picks it up a word at a time, and meets it whole at the end.
-
-     `at` is the beat the word lands after; `cy` puts it in the band the
-     photographs of that beat are NOT using — the high-band beat gets a
-     word on the floor, the low-and-wide beat gets one near the ceiling.
-     Change a number here and the reading changes; the words themselves
-     are the only copy on this page. */
-
-  var LINE = [
-    { at: 1,  word: 'We',        cy: 0.14 },
-    { at: 2,  word: 'capture',   cy: 0.86 },
-    { at: 4,  word: 'moments.',  cy: 0.16 },
-    { at: 6,  word: 'They',      cy: 0.84 },
-    { at: 8,  word: 'become',    cy: 0.18 },
-    { at: 10, word: 'memories.', cy: 0.82 }
-  ];
-
-  var LINE_FULL = 'We capture moments. They become memories.';
-
-  /* Same index in, same number out, every visit — the jitter that keeps a
-     column from looking ruled is furniture, not a reshuffle. */
-  function hash(i, salt) {
-    var x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
+  /* Stable pseudo-randomness. The wall has to look composed by hand and look
+     the SAME every time it is drawn — a composition that reshuffles on
+     reload is not a composition. So every jitter is a hash of the thing's
+     own index, never Math.random(). */
+  function hash(n, salt) {
+    var x = Math.sin((n + 1) * 127.1 + (salt || 0) * 311.7) * 43758.5453;
     return x - Math.floor(x);
   }
 
-  /* ---------------------------------------------------------------
-     2. THE MATERIAL
-     One running order: every still in the order it was shot, with the two
-     cuts dropped in where the travel wants an event — one early enough to
-     be found in the first few seconds, one past the middle.
-     --------------------------------------------------------------- */
-
-  /* The archive is shot material only. `tools/backstage-data.mjs` also
-     classifies a key art strip — finished posters, cut after the fact, kept
-     in assets/posters/ — and those are not behind the scenes of anything.
-     The assets stay where they are and the generator keeps writing the
-     strip; this page just does not hang it.
-
-     Read off `dir` rather than off the strip's id, so a second batch of
-     finished art filed under any name is left out on the same grounds. */
-  var stills = [];
-  DATA.strips.forEach(function (strip) {
-    var dir = strip.dir || BASE;
-    if (dir.indexOf('assets/backstage/') !== 0) return;
-    strip.shots.forEach(function (shot) {
-      stills.push({ kind: 'shot', shot: shot, strip: strip });
-    });
-  });
-
-  var films = (DATA.films || []).map(function (f, i) {
-    return { kind: 'film', film: f, n: i };
-  });
-
-  var order = stills.slice();
-  if (films[0]) order.splice(Math.min(3, order.length), 0, films[0]);
-  if (films[1]) order.splice(Math.round(order.length * 0.62), 0, films[1]);
+  function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function gcd(a, b) { while (b) { var t = a % b; a = b; b = t; } return a; }
+  function titleOf(id) { return (FILMS[id] && FILMS[id].title) || ''; }
 
   /* ---------------------------------------------------------------
-     3. BUILDING
-     Every frame is built once. Layout runs again on resize; the elements
-     do not.
+     2. BUILDING
+
+     One flat pool. A cut and a photograph are the same kind of thing here
+     and differ only in size and in the fact that two of them move.
      --------------------------------------------------------------- */
 
-  var built = [];      /* every frame, built once */
-  var items = [];      /* the ones this viewport places, in travel order */
-  var viewable = [];   /* the placed stills — what the viewer steps through */
+  var items = [];
+  var viewable = [];
   var small = false;
 
-  order.forEach(function (entry, i) {
-    var it = { i: i, kind: entry.kind, x: 0, y: 0, w: 0, h: 0, loaded: false };
+  /* A cut may have been delivered in two aspects: the 9:16 master it was
+     graded as, and a 16:9 version of the same edit. Which one a viewport
+     gets is decided at layout, so turning a phone changes the cut as well as
+     the composition around it. Only ever one of the two is fetched. */
+  function useVariant(it, wide) {
+    var v = (wide && it.cut.wide) ? it.cut.wide : it.cut;
+    if (it.variant === v) return;
+    it.variant = v;
+    it.src = v.src;
+    it.ratio = v.ratio;
 
-    if (entry.kind === 'film') {
-      var f = entry.film;
-      it.ratio = 720 / 1280;
-      it.el = document.createElement('figure');
-      it.el.className = 'frame frame--film';
+    var vid = it.video;
+    vid.poster = v.poster;
+    if (!vid.getAttribute('src')) return;
 
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'frame__btn';
-      btn.setAttribute('aria-label', 'Play ' + f.title + ', behind the scenes');
-
-      var vid = document.createElement('video');
-      vid.muted = true;
-      vid.loop = true;
-      vid.playsInline = true;
-      vid.setAttribute('playsinline', '');
-      vid.setAttribute('muted', '');
-      vid.preload = 'none';
-      vid.poster = f.poster;
-      vid.tabIndex = -1;
-
-      btn.appendChild(vid);
-      it.el.appendChild(btn);
-      it.video = vid;
-      it.film = f;
-      it.src = f.src;
-      it.title = f.title;
-
-      /* The one caption in the room, and it is a slate: name, running time,
-         nothing else. */
-      var slate = document.createElement('figcaption');
-      slate.className = 'slate';
-      slate.innerHTML = '<span>' + f.title + '</span><span class="slate__run">' +
-        Math.floor(f.seconds / 60) + ':' + String(f.seconds % 60).padStart(2, '0') + '</span>';
-      it.el.appendChild(slate);
-
-      btn.addEventListener('click', function () { openViewer(it); });
-
-    } else {
-      var s = entry.shot;
-      it.ratio = s.w / s.h;
-      it.slug = s.s;
-      it.dir = entry.strip.dir || BASE;
-      it.title = entry.strip.title;
-
-      it.el = document.createElement('figure');
-      it.el.className = 'frame';
-
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'frame__btn';
-      b.setAttribute('aria-label', 'View frame — ' + entry.strip.title);
-
-      var img = document.createElement('img');
-      img.alt = '';
-      img.decoding = 'async';
-      img.width = s.w;
-      img.height = s.h;
-
-      b.appendChild(img);
-      it.el.appendChild(b);
-      it.img = img;
-
-      b.addEventListener('click', function () { openViewer(it); });
+    var at = vid.currentTime;
+    var running = !vid.paused;
+    vid.src = v.src;
+    vid.addEventListener('loadedmetadata', function () {
+      try { vid.currentTime = Math.min(at, vid.duration || at); } catch (e) {}
+    }, { once: true });
+    if (running) {
+      var pr = vid.play();
+      if (pr && pr.catch) pr.catch(function () {});
     }
+  }
 
-    it.plane = 'main';
-    built.push(it);
+  /* A photograph delivered cropped twice — wide for a room with width, tall
+     for a phone. Same argument as the cuts, same seam. */
+  function useCrop(it, wide) {
+    var v = (!wide && it.shot.tall) ? it.shot.tall : it.shot;
+    if (it.variant === v) return;
+    it.variant = v;
+    it.ratio = v.w / v.h;
+    it.stem = BASE + it.slug + (v === it.shot.tall ? '-mobile' : '');
+    if (it.loaded) paint(it);
+  }
+
+  (DATA.cuts || []).forEach(function (c) {
+    var it = { kind: 'cut', of: c.of, cut: c, i: items.length, title: titleOf(c.of) };
+    it.el = document.createElement('figure');
+    it.el.className = 'frame frame--cut';
+    it.el.setAttribute('data-of', c.of);
+
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'frame__btn';
+    b.setAttribute('aria-label', 'Play ' + it.title + ', behind the scenes');
+
+    var vid = document.createElement('video');
+    vid.muted = true;
+    vid.loop = true;
+    vid.playsInline = true;
+    vid.setAttribute('playsinline', '');
+    vid.setAttribute('muted', '');
+    vid.preload = 'none';
+    vid.tabIndex = -1;
+    b.appendChild(vid);
+    it.el.appendChild(b);
+    it.video = vid;
+    useVariant(it, false);
+
+    /* The one caption on the wall, and it is a slate: name and running time,
+       nothing else. No photograph gets one — turning every frame into a card
+       with a production, a year and a medium on it is exactly what this page
+       is not. */
+    var slate = document.createElement('figcaption');
+    slate.className = 'slate';
+    slate.innerHTML = '<span>' + it.title + '</span><span class="slate__run">' +
+      Math.floor(c.seconds / 60) + ':' + pad2(c.seconds % 60) + '</span>';
+    it.el.appendChild(slate);
+
+    b.addEventListener('click', function () { openViewer(it); });
+    field.appendChild(it.el);
+    items.push(it);
   });
 
-  /* The words and the sign-off are built once, like the frames, and hang on
-     the planes so they travel with the room rather than floating over it. */
+  DATA.shots.forEach(function (s) {
+    var it = { kind: 'shot', of: s.of, shot: s, slug: s.s, i: items.length, title: titleOf(s.of) };
+    it.el = document.createElement('figure');
+    it.el.className = 'frame';
+    it.el.setAttribute('data-of', s.of);
 
-  var words = LINE.map(function (m) {
-    var el = document.createElement('p');
-    el.className = 'word';
-    el.textContent = m.word;
-    planes.main.appendChild(el);
-    return { at: m.at, cy: m.cy, el: el };
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'frame__btn';
+    b.setAttribute('aria-label', 'View frame — ' + it.title);
+
+    var img = document.createElement('img');
+    img.alt = '';
+    img.decoding = 'async';
+    b.appendChild(img);
+    it.el.appendChild(b);
+    it.img = img;
+    useCrop(it, true);
+
+    b.addEventListener('click', function () { openViewer(it); });
+    field.appendChild(it.el);
+    items.push(it);
+    viewable.push(it);
   });
 
-  /* The end of the travel: the sentence whole, and the one way out of the
-     archive that is not the corner nav. */
-  var signoff = document.createElement('div');
-  signoff.className = 'signoff';
-  signoff.innerHTML =
-    '<p class="signoff__line">' + LINE_FULL + '</p>' +
-    '<a class="signoff__cta" href="contact.html">Start a project</a>';
-  planes.main.appendChild(signoff);
+  /* ---------------------------------------------------------------
+     3. THE DEAL
 
-  var totalEl = document.querySelector('[data-total]');
+     Round-robin across productions, largest pile first. Mirage has twelve
+     frames and Shopigo has one, so a straight shuffle would still leave
+     Mirage in clumps — dealing one from each production in turn spreads the
+     big piles through the whole sequence by construction. The cuts go down
+     first because the composition is built around them.
+     --------------------------------------------------------------- */
+
+  function interleave(list) {
+    var by = {};
+    list.forEach(function (it) { (by[it.of] = by[it.of] || []).push(it); });
+    var piles = Object.keys(by).map(function (k) { return by[k]; });
+    piles.sort(function (a, b) { return b.length - a.length; });
+
+    var out = [], left = list.length;
+    while (left) {
+      for (var i = 0; i < piles.length; i++) {
+        if (!piles[i].length) continue;
+        out.push(piles[i].shift());
+        left--;
+      }
+    }
+    return out;
+  }
+
+  var order = items.filter(function (it) { return it.kind === 'cut'; })
+    .concat(interleave(items.filter(function (it) { return it.kind === 'shot'; })));
 
   /* ---------------------------------------------------------------
      4. LAYOUT
-     The score, resolved against the viewport. Runs at start and on resize.
+
+     A jittered, staggered lattice — not a grid, and not a scatter either.
+
+     A pure scatter leaves holes: with forty-one things and no structure you
+     reliably get a corner with nothing in it for most of a screen, which is
+     the loudest complaint a wall like this can attract. A grid has no holes
+     and no life. So the wall is divided into cells, one thing to a cell,
+     every other row offset by half a cell so nothing lines up into columns,
+     and each thing thrown a good way off its cell's centre. The cell
+     guarantees the coverage; the offset and the throw take the grid back
+     out of it.
      --------------------------------------------------------------- */
 
-  var vw = 0, vh = 0, band = 0, maxX = 0, contentW = 0;
-  var signoffShown = false;
+  var vw = 0, vh = 0, W = 0, H = 0;
+  var limit = { x: 0, y: 0 };
+  var arrived = false;
+
+  function sized(k, ratio) {
+    return { w: Math.sqrt(k * k * ratio), h: Math.sqrt(k * k / ratio) };
+  }
+
+  function overlaps(a, b, gap) {
+    return Math.abs(a.x - b.x) * 2 < a.w + b.w + gap &&
+           Math.abs(a.y - b.y) * 2 < a.h + b.h + gap;
+  }
+
+  /* Which cells count as a cell's immediate neighbourhood, counting the
+     stagger. Used only to keep productions apart. */
+  function neighbours(cells, ci, cols) {
+    var out = [];
+    var r = Math.floor(ci / cols), c = ci % cols;
+    for (var dr = -1; dr <= 1; dr++) {
+      for (var dc = -1; dc <= 1; dc++) {
+        if (!dr && !dc) continue;
+        var rr = r + dr, cc = c + dc;
+        if (rr < 0 || cc < 0 || cc >= cols) continue;
+        var k = rr * cols + cc;
+        if (k >= 0 && k < cells) out.push(k);
+      }
+    }
+    return out;
+  }
 
   function layout() {
     /* A page opened in a background tab can report a zero viewport in some
        engines, and a composition scored against zero is a stack of nothing.
-       The fallbacks are a floor, not a guess — the loop below notices the
-       real numbers the moment they exist and lays out again. */
+       The fallbacks are a floor, not a guess. */
     vw = window.innerWidth || document.documentElement.clientWidth || 1280;
     vh = window.innerHeight || document.documentElement.clientHeight || 800;
     small = vw < 760;
 
-    var padTop = small ? 62 : 86;
-    var padBot = small ? 74 : 104;
-    band = Math.max(220, vh - padTop - padBot);
+    W = Math.round(vw * (small ? WALL_W_SMALL : WALL_W));
+    H = Math.round(vh * (small ? WALL_H_SMALL : WALL_H));
 
-    var score = small ? BEATS_SMALL : BEATS;
-    var maxW = Math.max(200, vw * (small ? 0.78 : 0.56));
+    var tiers = small ? TIER_SMALL : TIER;
+    var cutK = small ? CUT_K_SMALL : CUT_K;
+    var gap = Math.min(vw, vh) * (small ? 0.03 : 0.038);
 
-    /* Half the stills on a phone — every other one, so both shoots survive
-       the cut rather than the tail being lopped off, and both cuts always
-       do. The frames left out are built and kept; they are simply not in
-       this room, and a rotation back to a wide viewport puts them back. */
-    var seen = 0;
-    items = built.filter(function (b) {
-      if (b.kind === 'film') return true;
-      return small ? (seen++ % 2 === 0) : (seen++, true);
+    /* --- size everything first: the lattice is scored against what has to
+       fit into it, not the other way round --- */
+    order.forEach(function (it, n) {
+      if (it.kind === 'cut') useVariant(it, !small);
+      else useCrop(it, !small);
+      var k = it.kind === 'cut' ? cutK : tiers[SCALE[n % SCALE.length]];
+      /* ±7%, so two frames on the same tier are never quite twins. */
+      k *= 0.94 + hash(it.i, 7) * 0.13;
+      var s = sized(k, it.ratio);
+      /* A floor on the WIDTH, not on the area. Sizing by area is what keeps
+         a portrait and a landscape at the same visual weight, but it also
+         means a tall frame on the smallest tier comes out narrow, and below
+         about 180px across a photograph stops reading as a photograph and
+         starts reading as a thumbnail. */
+      var floorW = small ? 96 : 180;
+      if (s.w < floorW) { var up = floorW / s.w; s.w *= up; s.h *= up; }
+      it.w = Math.round(s.w);
+      it.h = Math.round(s.h);
     });
 
-    viewable = [];
-    for (var q = 0; q < built.length; q++) {
-      built[q].el.style.display = 'none';
-      /* null, not false: promote() only writes on a change, so the record
-         has to say "unknown" or the first pass will agree with itself and
-         leave every off-screen frame painted. */
-      built[q].vis = null;
+    /* --- the lattice --- */
+    var n = order.length;
+    var want = Math.ceil(n * 1.12);      /* a few spare cells, to breathe */
+    var cols = Math.max(2, Math.round(Math.sqrt(want * (W / H))));
+    var rows = Math.max(2, Math.ceil(want / cols));
+    var cells = cols * rows;
+    var cw = W / cols, ch = H / rows;
+
+    /* WHICH cells are left empty is chosen first, and chosen to be spread.
+       Taking them as whatever the fill order happened not to reach is the
+       obvious thing and it is how you get a hole: a stride that visits every
+       cell exactly once still leaves its unused tail in runs — three cells
+       side by side in one corner — and three empty cells in a row on a
+       ten-wide lattice is most of a screen with nothing in it.
+
+       So the spares are dealt out evenly across the wall up front, roughly
+       one every half-row, which puts real negative space into the
+       composition without ever putting two holes next to each other. */
+    var spare = cells - n;
+    var empty = {};
+    for (var e = 0; e < spare; e++) {
+      empty[Math.floor((e + 0.5) * cells / spare)] = true;
     }
-    for (var r = 0; r < items.length; r++) {
-      items[r].el.style.display = '';
-      if (items[r].kind !== 'film') {
-        items[r].at = viewable.length;
-        items[r].el.querySelector('.frame__btn')
-          .setAttribute('aria-label', 'View frame ' + (viewable.length + 1) + ' — ' + items[r].title);
-        viewable.push(items[r]);
+
+    /* The rest are filled in a scattered order rather than left to right, so
+       that the deal does not walk along a row laying down neighbours. */
+    var open = [];
+    var stride = Math.max(5, Math.round(cells * 0.31));
+    while (gcd(stride, cells) !== 1) stride++;
+    for (var i = 0; i < cells; i++) {
+      var c0 = (i * stride + 3) % cells;
+      if (!empty[c0]) open.push(c0);
+    }
+
+    /* --- keep productions apart ---
+       The deal already interleaves them, but the deal is a SEQUENCE and the
+       wall is a PLACE: two frames next to each other in the sequence can
+       still land next to each other on the lattice. So the assignment is
+       repaired against the geometry itself — swap two frames whenever doing
+       so lowers the number of same-production frames sitting in each other's
+       neighbourhood. */
+    var at = open.slice(0, n);
+    var inCell = {};
+    for (i = 0; i < n; i++) inCell[at[i]] = i;
+
+    function clash(idx) {
+      var me = order[idx], bad = 0;
+      var nb = neighbours(cells, at[idx], cols);
+      for (var j = 0; j < nb.length; j++) {
+        var other = inCell[nb[j]];
+        if (other !== undefined && order[other].of === me.of) bad++;
+      }
+      return bad;
+    }
+
+    for (var pass = 0; pass < 4000; pass++) {
+      var a = Math.floor(hash(pass, 11) * n);
+      var b = Math.floor(hash(pass, 13) * n);
+      if (a === b || order[a].of === order[b].of) continue;
+      var before = clash(a) + clash(b);
+      if (!before) continue;
+      var ca = at[a], cb = at[b];
+      at[a] = cb; at[b] = ca; inCell[ca] = b; inCell[cb] = a;
+      if (clash(a) + clash(b) >= before) {          /* no better — put it back */
+        at[a] = ca; at[b] = cb; inCell[ca] = a; inCell[cb] = b;
       }
     }
-    if (totalEl) totalEl.textContent = '/ ' + pad(items.length);
-    lastCount = -1;
 
-    var x = vw * (small ? 0.10 : 0.16);   /* lead-in: the room starts empty */
-    var at = 0;                            /* which item we are dealing */
-    var beat = 0;
+    /* --- place --- */
+    order.forEach(function (it, idx) {
+      var c = at[idx];
+      var r = Math.floor(c / cols), col = c % cols;
+      /* Every other row half a cell over. This one line is most of why the
+         wall does not read as a grid: without it, a column of frames lines
+         up down each cell boundary and no amount of jitter hides it. */
+      var stagger = (r % 2) ? cw * 0.5 : 0;
+      var cx = -W / 2 + (col + 0.5) * cw + stagger;
+      var cy = -H / 2 + (r + 0.5) * ch;
+      /* Thrown well off centre — far enough that the lattice is not legible,
+         not so far that the coverage it was there to guarantee is undone. */
+      it.x = cx + (hash(it.i, 2) - 0.5) * cw * 0.62;
+      it.y = cy + (hash(it.i, 3) - 0.5) * ch * 0.62;
+    });
 
-    /* Every word starts unplaced. A short room may not reach every beat, and
-       a word with nowhere to go must not be left at last resize's position. */
-    words.forEach(function (w) { w.placed = false; w.el.style.display = 'none'; });
+    /* --- and then nothing may touch ---
+       Separate along the axis each pair is LEAST buried on, by exactly the
+       depth they are buried: the shortest way out of an overlap. Pushing
+       along the line between two centres instead looks reasonable and is
+       not — two frames overlapping by a hair vertically while sitting far
+       apart horizontally get shoved mostly sideways, and a force scaled off
+       the horizontal penetration goes negative and drives them together. */
+    /* Nothing may hang off the wall either — the wall IS the archive, and an
+       edge you can see past stops feeling like one. Which means the clamp
+       has to live INSIDE the relaxation and not after it: clamping a settled
+       layout shoves every edge frame back into its neighbour, and the seven
+       overlaps that produces are exactly the ones the relaxation just spent
+       a hundred passes removing. Pushing apart and pulling in on the same
+       pass lets the two constraints settle against each other. */
+    function pen(it) {
+      it.x = clamp(it.x, -W / 2 + it.w / 2, W / 2 - it.w / 2);
+      /* A cut carries its slate under it and has to leave room for it. */
+      var below = it.kind === 'cut' ? Math.min(vw, vh) * 0.07 : 0;
+      it.y = clamp(it.y, -H / 2 + it.h / 2, H / 2 - it.h / 2 - below);
+    }
 
-    while (at < items.length) {
-      var B = score[beat % score.length];
-      beat++;
-
-      x += (B.gapBefore || 0) * band;
-
-      for (var c = 0; c < B.cols.length && at < items.length; c++) {
-        var col = B.cols[c];
-        x += (col.gap || 0) * band;
-
-        /* Deal this column's frames, measure them, then place them centred
-           on the column so a stack of two reads as one column. */
-        var taken = [];
-        var colW = 0;
-        var colFilm = false;
-        for (var k = 0; k < col.items.length && at < items.length; k++) {
-          var slot = col.items[k];
-          var it = items[at++];
-
-          /* A cut is always the largest thing in its neighbourhood, whatever
-             slot it lands in — it is the event, not a frame that happens to
-             be tall. */
-          if (it.kind === 'film') colFilm = true;
-          var hf = it.kind === 'film' ? (small ? 0.74 : 0.86) : slot.h;
-          var ih = hf * band;
-          var iw = ih * it.ratio;
-          if (iw > maxW) { iw = maxW; ih = iw / it.ratio; }
-
-          it.h = Math.round(ih);
-          it.w = Math.round(iw);
-          it.plane = it.kind === 'film' ? 'main' : (slot.p || 'main');
-          it.slotCy = slot.cy;
-          taken.push(it);
-          if (iw > colW) colW = iw;
+    for (pass = 0; pass < 260; pass++) {
+      var moved = false;
+      for (i = 0; i < n; i++) {
+        for (var j = i + 1; j < n; j++) {
+          var A = order[i], B = order[j];
+          if (!overlaps(A, B, gap)) continue;
+          var dx = B.x - A.x, dy = B.y - A.y;
+          var ox = (A.w + B.w + gap) / 2 - Math.abs(dx);
+          var oy = (A.h + B.h + gap) / 2 - Math.abs(dy);
+          if (ox < oy) {
+            var px = (dx < 0 ? -1 : 1) * ox * 0.5;
+            A.x -= px; B.x += px;
+          } else {
+            var py = (dy < 0 ? -1 : 1) * oy * 0.5;
+            A.y -= py; B.y += py;
+          }
+          pen(A); pen(B);
+          moved = true;
         }
-
-        /* A cut is given air on both sides whatever the beat asked for. It
-           is the event in its stretch of the archive, and an event with a
-           photograph lapped over its corner is not one. */
-        if (colFilm) x += band * 0.22;
-
-        for (var j = 0; j < taken.length; j++) {
-          var t = taken[j];
-          /* ±4% of the band, from the index. Enough that no two columns are
-             ever exactly ruled to each other; not enough to read as noise. */
-          var jitter = (hash(t.i, 3) - 0.5) * band * 0.08;
-          var cy = padTop + t.slotCy * band;
-          var top = cy - t.h / 2 + jitter;
-
-          /* A photograph may run almost to the edge of the room — that bleed
-             is half of why the wall reads as a wall. A cut may not: it
-             carries a slate under it, and the slate has to clear the bottom
-             row of the interface. */
-          var lo = t.kind === 'film' ? padTop * 0.4 : 10;
-          var hi = vh - t.h - (t.kind === 'film' ? padBot : 10);
-          top = Math.max(lo, Math.min(Math.max(lo, hi), top));
-
-          t.x = Math.round(x + (colW - t.w) / 2);
-          t.y = Math.round(top);
-
-          var f = DEPTH[t.plane];
-          t.el.style.width = t.w + 'px';
-          t.el.style.height = t.h + 'px';
-          t.el.style.left = Math.round(t.x * f) + 'px';
-          t.el.style.top = t.y + 'px';
-
-          if (t.el.parentNode !== planes[t.plane]) planes[t.plane].appendChild(t.el);
-
-          /* `sizes` is the frame's real width on this viewport, so the
-             browser takes the 640 strip thumb for anything small and only
-             reaches for the 1600 view where the frame is actually large
-             enough to want it. */
-          if (t.img) t.img.sizes = t.w + 'px';
-        }
-
-        x += colW + (colFilm ? band * 0.22 : 0);
       }
-
-      /* A word takes the beat's own trailing breath as its room, rather than
-         adding travel of its own — the sentence is set INTO the silence the
-         composition already leaves, which is the whole point of it. */
-      for (var wi = 0; wi < words.length; wi++) {
-        if (words[wi].at !== beat - 1) continue;
-        var wd = words[wi];
-        wd.el.style.display = '';
-        /* Measured, not guessed: the type is fluid and a word's width is
-           whatever the viewport made it. */
-        var ww = wd.el.offsetWidth, wh = wd.el.offsetHeight;
-        var wx = x + ((B.after || 0.3) * band - ww) / 2;
-        wd.el.style.left = Math.round(Math.max(x + 8, wx)) + 'px';
-        wd.el.style.top = Math.round(padTop + wd.cy * band - wh / 2) + 'px';
-        wd.placed = true;
-      }
-
-      x += (B.after || 0.3) * band;
+      if (!moved) break;
     }
 
-    /* The sentence whole, after the last photograph, with the way out under
-       it. It gets a screen of its own: arriving at a sign-off that is still
-       shoulder to shoulder with the archive is not arriving anywhere. */
-    x += band * (small ? 0.34 : 0.46);
-    var sw = signoff.offsetWidth, sh = signoff.offsetHeight;
-    signoff.style.left = Math.round(x) + 'px';
-    signoff.style.top = Math.round(padTop + band / 2 - sh / 2) + 'px';
-    x += sw;
+    order.forEach(function (it) {
+      pen(it);
 
-    contentW = x + vw * (small ? 0.12 : 0.18);
-    maxX = Math.max(0, contentW - vw);
+      it.el.style.width = it.w + 'px';
+      it.el.style.height = it.h + 'px';
+      it.el.style.left = Math.round(it.x - it.w / 2) + 'px';
+      it.el.style.top = Math.round(it.y - it.h / 2) + 'px';
+      if (it.img) it.img.sizes = it.w + 'px';
+    });
 
-    for (var p in planes) {
-      if (planes.hasOwnProperty(p)) planes[p].style.width = Math.round(contentW * DEPTH[p]) + 'px';
+    /* The camera may go exactly as far as the wall does and not a pixel
+       further. Where the wall is no bigger than the viewport on an axis
+       there is nowhere to go on it at all. */
+    limit.x = Math.max(0, (W - vw) / 2);
+    limit.y = Math.max(0, (H - vh) / 2);
+
+    if (!arrived) {
+      arrived = true;
+      /* Landing off-centre and off-axis, so the first screen is a
+         composition rather than the middle of a symmetrical rectangle, and
+         there is visibly more wall in every direction. */
+      cam.x = to.x = -limit.x * 0.3;
+      cam.y = to.y = -limit.y * 0.34;
     }
+    cam.x = to.x = clamp(cam.x, -limit.x, limit.x);
+    cam.y = to.y = clamp(cam.y, -limit.y, limit.y);
 
-    pos = Math.min(pos, maxX);
+    drawMap();
     render(true);
     promote(true);
   }
 
   /* ---------------------------------------------------------------
-     5. LOADING
-     Nothing is fetched until the camera is within a screen or two of it,
-     and the two cuts are only attached when they are nearly in the room.
+     5. THE CAMERA
+
+     Pointer, wheel, drag and keys all feed one velocity, and one easing
+     spends it, so the wall answers a trackpad and a dragged hand as one
+     thing rather than as three scroll modes bolted together.
      --------------------------------------------------------------- */
 
-  function promote(force) {
-    var near = vw * 1.6;
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i];
-      var left = it.x - pos;
-      var vis = left < vw + near && left + it.w > -near;
+  var cam = { x: 0, y: 0 };
+  var to = { x: 0, y: 0 };
+  var vel = { x: 0, y: 0 };
+  var lean = { x: 0, y: 0 };
+  var pointerLive = false;
+  var cursor = { x: -1e4, y: -1e4, on: false };
+  var keys = { x: 0, y: 0 };
+  var drag = null;
 
-      if (vis && !it.loaded) {
+  function feed(dx, dy) {
+    vel.x = clamp(vel.x + dx, -MAXV * 2.6, MAXV * 2.6);
+    vel.y = clamp(vel.y + dy, -MAXV * 2.6, MAXV * 2.6);
+    retireCue();
+  }
+
+  function onPointer(e) {
+    if (e.pointerType === 'touch') return;
+    cursor.x = e.clientX; cursor.y = e.clientY; cursor.on = true;
+    pointerLive = true;
+
+    /* A steady lean, not a position. The middle of the screen is dead so a
+       frame can be looked at and reached for without the wall sliding out
+       from under the cursor; past that the push comes on smoothly and is
+       strongest in the corners. */
+    var nx = (e.clientX / vw) * 2 - 1, ny = (e.clientY / vh) * 2 - 1;
+    var dead = 0.5;
+    lean.x = Math.abs(nx) < dead ? 0 : (nx - Math.sign(nx) * dead) / (1 - dead);
+    lean.y = Math.abs(ny) < dead ? 0 : (ny - Math.sign(ny) * dead) / (1 - dead);
+    lean.x *= Math.abs(lean.x); lean.y *= Math.abs(lean.y);
+
+    cursorTo(e.clientX, e.clientY);
+    retireCue();
+  }
+
+  room.addEventListener('pointermove', onPointer, { passive: true });
+  window.addEventListener('pointerout', function (e) {
+    if (!e.relatedTarget) { pointerLive = false; lean.x = lean.y = 0; cursorOff(); }
+  });
+  window.addEventListener('blur', function () {
+    pointerLive = false; lean.x = lean.y = 0; keys.x = keys.y = 0;
+  });
+
+  room.addEventListener('wheel', function (e) {
+    if (e.ctrlKey || e.metaKey || viewerOpen) return;
+    e.preventDefault();
+    feed(clamp(e.deltaX, -90, 90) * 0.34, clamp(e.deltaY, -90, 90) * 0.34);
+  }, { passive: false });
+
+  room.addEventListener('pointerdown', function (e) {
+    if (viewerOpen || e.button) return;
+    drag = {
+      id: e.pointerId, x: e.clientX, y: e.clientY,
+      /* Where the camera and the hand both started. The stretch is measured
+         from here, not accumulated frame by frame. */
+      camX: cam.x, camY: cam.y, fromX: e.clientX, fromY: e.clientY,
+      vx: 0, vy: 0, moved: 0, at: Date.now()
+    };
+    vel.x = vel.y = 0;
+    retireCue();
+  });
+
+  /* Past the edge the wall gives, but only ever by a little, and it takes it
+     back the moment the hand lets go. Feeling the wall end is the point.
+
+     The give is ASYMPTOTIC: however hard the wall is pulled it approaches a
+     tenth of a screen and never passes it. A plain linear give — the edge
+     plus some fraction of the overshoot — has no ceiling at all, and worse,
+     re-applying it to an already-stretched position on every pointermove
+     compounds instead of resisting, which is how the camera ends up most of
+     a screen off the end of a wall it is supposed to be clamped to. */
+  function rubber(v, lim) {
+    var over = v > lim ? v - lim : v < -lim ? v + lim : 0;
+    if (!over) return v;
+    var most = Math.min(vw, vh) * 0.1;
+    var give = most * (1 - 1 / (Math.abs(over) / most + 1));
+    return v > 0 ? lim + give : -lim - give;
+  }
+
+  window.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    drag.x = e.clientX; drag.y = e.clientY;
+    drag.vx = dx; drag.vy = dy; drag.at = Date.now();
+    drag.moved += Math.abs(dx) + Math.abs(dy);
+    cam.x = rubber(drag.camX - (e.clientX - drag.fromX), limit.x);
+    cam.y = rubber(drag.camY - (e.clientY - drag.fromY), limit.y);
+    to.x = clamp(cam.x, -limit.x, limit.x);
+    to.y = clamp(cam.y, -limit.y, limit.y);
+    if (drag.moved > 6) room.classList.add('is-dragging');
+  }, { passive: true });
+
+  /* A pointer that has not reported in for a third of a second is a gesture
+     that ended somewhere we were not told about. */
+  function dragLive() { return Date.now() - drag.at < 340; }
+
+  function letGo(e) {
+    if (!drag || (e && e.pointerId !== drag.id)) return;
+    feed(-drag.vx * 1.5, -drag.vy * 1.5);
+    /* A drag that travelled is not a click. */
+    if (drag.moved > 6) {
+      room.addEventListener('click', function (ev) {
+        ev.stopPropagation(); ev.preventDefault();
+      }, { capture: true, once: true });
+    }
+    room.classList.remove('is-dragging');
+    drag = null;
+  }
+  window.addEventListener('pointerup', letGo);
+  window.addEventListener('pointercancel', letGo);
+
+  window.addEventListener('keydown', function (e) {
+    if (viewerOpen) return;
+    if (e.key === 'ArrowRight') keys.x = 1;
+    else if (e.key === 'ArrowLeft') keys.x = -1;
+    else if (e.key === 'ArrowDown') keys.y = 1;
+    else if (e.key === 'ArrowUp') keys.y = -1;
+    else if (e.key === 'Home') { to.x = to.y = 0; vel.x = vel.y = 0; }
+    else return;
+    retireCue();
+    e.preventDefault();
+  });
+  window.addEventListener('keyup', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') keys.x = 0;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') keys.y = 0;
+  });
+
+  function step() {
+    if (!drag) {
+      if (pointerLive && !viewerOpen) { vel.x += lean.x * 2.0; vel.y += lean.y * 2.0; }
+      if (keys.x || keys.y) { vel.x += keys.x * 3.4; vel.y += keys.y * 3.4; }
+
+      vel.x = clamp(vel.x, -MAXV, MAXV) * 0.86;
+      vel.y = clamp(vel.y, -MAXV, MAXV) * 0.86;
+      if (Math.abs(vel.x) < 0.01) vel.x = 0;
+      if (Math.abs(vel.y) < 0.01) vel.y = 0;
+
+      to.x = clamp(to.x + vel.x, -limit.x, limit.x);
+      to.y = clamp(to.y + vel.y, -limit.y, limit.y);
+      /* Momentum spent at the edge rather than pressed against it. */
+      if (Math.abs(to.x) === limit.x) vel.x = 0;
+      if (Math.abs(to.y) === limit.y) vel.y = 0;
+
+      /* The camera never arrives where it was sent, it eases toward it. This
+         one line is most of why the wall feels heavy rather than scrolled. */
+      cam.x += (to.x - cam.x) * 0.09;
+      cam.y += (to.y - cam.y) * 0.09;
+    }
+
+    if (drag && !dragLive()) letGo();
+
+    render(false);
+    promote(false);
+    requestAnimationFrame(step);
+  }
+
+  /* ---------------------------------------------------------------
+     6. RENDER
+
+     One transform for the whole wall, and one more only for the frames the
+     cursor is actually near. Everything off-screen is taken out of the paint.
+     --------------------------------------------------------------- */
+
+  var nearEl = document.querySelector('[data-near]');
+  var ofEl = document.querySelector('[data-of-count]');
+  var lastNear = null;
+  var mapView = document.querySelector('[data-map-view]');
+  if (ofEl) ofEl.textContent = '/ ' + pad2(items.length);
+
+  function render(force) {
+    var ox = Math.round(-cam.x), oy = Math.round(-cam.y);
+    field.style.transform = 'translate3d(' + ox + 'px,' + oy + 'px,0)';
+
+    var best = null, bd = 1e12;
+
+    for (var i = 0; i < order.length; i++) {
+      var it = order[i];
+      var px = it.x + vw / 2 + ox;
+      var py = it.y + vh / 2 + oy;
+
+      var on = px + it.w / 2 > -240 && px - it.w / 2 < vw + 240 &&
+               py + it.h / 2 > -240 && py - it.h / 2 < vh + 240;
+      if (force || on !== it.on) {
+        it.on = on;
+        it.el.style.visibility = on ? '' : 'hidden';
+      }
+      if (!on) continue;
+
+      var dcx = px - vw / 2, dcy = py - vh / 2;
+      var dc = dcx * dcx + dcy * dcy;
+      if (dc < bd) { bd = dc; best = it; }
+
+      /* Revealed by the camera, once. A frame is held slightly small until
+         the visitor's own movement brings it properly inside the viewport,
+         and then it settles to its true size. It is not re-run on the way
+         back past: a wall where everything breathes every time you cross it
+         is a screensaver. */
+      if (!it.shown &&
+          px + it.w / 2 > vw * 0.14 && px - it.w / 2 < vw * 0.86 &&
+          py + it.h / 2 > vh * 0.14 && py - it.h / 2 < vh * 0.86) {
+        it.shown = true;
+        it.el.classList.add('is-shown');
+      }
+
+      /* The cursor is felt, not clicked. Held well under a tenth so it reads
+         as the wall answering a hand and never as a control lighting up. */
+      var lx = 0, ly = 0, sc = 1;
+      if (cursor.on && !small && !viewerOpen && !reduced) {
+        var dx = cursor.x - px, dy = cursor.y - py;
+        var d = Math.sqrt(dx * dx + dy * dy);
+        if (d < GRAB) {
+          var f = 1 - d / GRAB;
+          f = f * f * (3 - 2 * f);          /* smoothstep */
+          sc = 1 + LIFT * f;
+          lx = (dx / (d || 1)) * PULL * f;
+          ly = (dy / (d || 1)) * PULL * f;
+        }
+      }
+
+      /* Written only on a real change, and rounded, so a camera at rest
+         stops producing style writes altogether. */
+      var key = (lx * 100 | 0) + ':' + (ly * 100 | 0) + ':' + (sc * 1000 | 0);
+      if (key !== it.key) {
+        it.key = key;
+        it.el.style.transform = (sc === 1 && !lx && !ly) ? ''
+          : 'translate3d(' + lx.toFixed(1) + 'px,' + ly.toFixed(1) + 'px,0) scale(' + sc.toFixed(4) + ')';
+        it.el.classList.toggle('is-near', sc > 1.004);
+      }
+    }
+
+    /* The corner names whatever is nearest the middle of the screen — the
+       only place a production is named without the cursor asking. */
+    if (best && best !== lastNear) {
+      lastNear = best;
+      if (nearEl) nearEl.textContent = best.title;
+    }
+
+    if (mapView && mapW) {
+      mapView.style.transform = 'translate3d(' +
+        ((cam.x / W) * mapW).toFixed(1) + 'px,' + ((cam.y / H) * mapH).toFixed(1) + 'px,0)';
+    }
+  }
+
+  /* ---------------------------------------------------------------
+     7. THE MAP
+
+     The whole wall at a glance, and the one thing on the page whose job is
+     to say THIS IS FINITE. Painted once per layout — forty-one rectangles
+     into a canvas — and after that only the viewport box moves.
+     --------------------------------------------------------------- */
+
+  var mapCanvas = document.querySelector('[data-map]');
+  var mapW = 0, mapH = 0;
+
+  function drawMap() {
+    if (!mapCanvas || !mapCanvas.getContext) return;
+    var box = mapCanvas.getBoundingClientRect();
+    mapW = box.width; mapH = box.height;
+    if (!mapW || !mapH) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    mapCanvas.width = Math.round(mapW * dpr);
+    mapCanvas.height = Math.round(mapH * dpr);
+    var g = mapCanvas.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, mapW, mapH);
+
+    var sx = mapW / W, sy = mapH / H;
+    order.forEach(function (it) {
+      g.fillStyle = it.kind === 'cut' ? 'rgba(245,244,238,0.82)' : 'rgba(245,244,238,0.34)';
+      g.fillRect(
+        (it.x - it.w / 2 + W / 2) * sx, (it.y - it.h / 2 + H / 2) * sy,
+        Math.max(1, it.w * sx), Math.max(1, it.h * sy)
+      );
+    });
+
+    if (mapView) {
+      mapView.style.width = Math.min(mapW, vw * sx) + 'px';
+      mapView.style.height = Math.min(mapH, vh * sy) + 'px';
+    }
+  }
+
+  /* ---------------------------------------------------------------
+     8. LOADING
+     --------------------------------------------------------------- */
+
+  function paint(it) {
+    it.img.srcset = it.stem + '-thumb.webp 640w, ' + it.stem + '-view.webp 1600w';
+    it.img.src = it.stem + '-thumb.webp';
+  }
+
+  function promote(force) {
+    var near = Math.min(vw, vh) * NEAR;
+    for (var i = 0; i < order.length; i++) {
+      var it = order[i];
+      var px = it.x + vw / 2 - cam.x;
+      var py = it.y + vh / 2 - cam.y;
+      var close = px > -near && px < vw + near && py > -near && py < vh + near;
+
+      if (close && !it.loaded) {
         it.loaded = true;
         if (it.img) {
-          it.img.srcset = it.dir + it.slug + '-thumb.webp 640w, ' + it.dir + it.slug + '-view.webp 1600w';
-          it.img.src = it.dir + it.slug + '-thumb.webp';
+          paint(it);
           /* Decoded before shown where the browser will say so, but never
              waiting on it: a tab that is not in front parks decode()
-             indefinitely, and a frame that is loaded and not shown is just
-             a hole in the wall. Whichever answer arrives first wins. */
+             indefinitely, and a frame that is loaded and not shown is just a
+             hole in the wall. Whichever answer arrives first wins. */
           (function (el, node) {
-            var shown = false;
-            function show() { if (shown) return; shown = true; el.classList.add('is-in'); }
+            var done = false;
+            function show() { if (done) return; done = true; el.classList.add('is-in'); }
             if (node.decode) node.decode().then(show, show);
             if (node.complete) show();
             else {
@@ -538,333 +796,91 @@
         }
       }
 
-      if (it.kind === 'film') {
-        var close = left < vw * 1.1 && left + it.w > -vw * 0.4;
-        if (close && !it.video.src) {
+      if (it.kind === 'cut') {
+        var here = px > -vw * 0.5 && px < vw * 1.5 && py > -vh * 0.5 && py < vh * 1.5;
+        if (here && !it.video.getAttribute('src')) {
           it.video.src = it.src;
           it.el.classList.add('is-in');
         }
-        /* Paused the moment it is off the near edge of the room. Two
-           decoders running behind the archive is two decoders too many. */
-        if (close && it.video.src && it.video.paused && !viewerOpen) {
+        /* Paused the moment it is off the near edge of the wall. Two decoders
+           running behind an archive is two too many. */
+        if (here && it.video.getAttribute('src') && it.video.paused && !viewerOpen) {
           var pr = it.video.play();
           if (pr && pr.catch) pr.catch(function () {});
-        } else if (!close && it.video.src && !it.video.paused) {
+        } else if (!here && it.video.getAttribute('src') && !it.video.paused) {
           it.video.pause();
         }
       }
-
-      /* Off-screen frames are taken out of the paint entirely. This is the
-         difference between seventy frames costing seventy composites a
-         frame and costing the eight that are actually in the room. Written
-         only on the change, and never over the frame the viewer is holding
-         out of the room. */
-      if (it !== current && it.vis !== vis) {
-        it.vis = vis;
-        it.el.style.visibility = vis ? '' : 'hidden';
-      }
-    }
-
-    /* The words and the sign-off arrive the same way the frames do — once,
-       when the camera reaches them, and they stay arrived. A word that came
-       up on the way out and went down again on the way back would read as a
-       blink rather than as writing on a wall. */
-    for (var w = 0; w < words.length; w++) {
-      var wd = words[w];
-      if (!wd.placed || wd.shown) continue;
-      var wl = parseFloat(wd.el.style.left || 0) - pos;
-      if (wl < vw * 1.05 && wl + wd.el.offsetWidth > -vw * 0.2) {
-        wd.shown = true;
-        wd.el.classList.add('is-in');
-      }
-    }
-
-    if (!signoffShown) {
-      var sl = parseFloat(signoff.style.left || 0) - pos;
-      if (sl < vw * 1.05) { signoffShown = true; signoff.classList.add('is-in'); }
     }
   }
 
   /* ---------------------------------------------------------------
-     6. THE CAMERA
-     Pointer position sets a speed, not a place. The speed is eased into,
-     never jumped to, so the room has weight: it takes about a third of a
-     second to reach a pace and about as long to give it up.
+     9. THE CUE AND THE CURSOR
+
+     The cursor is where a production gets named. Rather than hang a label on
+     every photograph — which would turn a wall into a catalogue — the name
+     of whatever is under the pointer is carried by the pointer itself.
      --------------------------------------------------------------- */
-
-  var pos = 0;        /* where the camera is, in content px */
-  var vel = 0;        /* px per 60Hz frame */
-  var norm = 0;       /* pointer across the viewport, -1 to 1 */
-  var pointerLive = false;
-  var keyDir = 0;
-  var dragging = false;
-  var viewerOpen = false;
-
-  var MAXV = 32;      /* top speed, px per frame — about 1900px a second */
-  var EASE = 0.062;   /* how hard the camera chases the speed it is asked for */
-  var DEAD = 0.14;    /* the still middle of the screen */
-
-  /* Position to speed. Squared past the dead zone, so the middle two thirds
-     of the screen are a crawl and the last stretch to the edge is where the
-     travel actually lives — the pointer is a throttle, not a scrollbar. */
-  function throttle(n) {
-    var a = Math.abs(n);
-    if (a <= DEAD) return 0;
-    var k = (a - DEAD) / (1 - DEAD);
-    return (n < 0 ? -1 : 1) * k * k;
-  }
-
-  function onPointer(e) {
-    if (e.pointerType === 'touch') return;
-    norm = (e.clientX / vw) * 2 - 1;
-    pointerLive = true;
-    cursorTo(e.clientX, e.clientY);
-    retireCue();
-  }
-
-  room.addEventListener('pointermove', onPointer, { passive: true });
-  window.addEventListener('pointerdown', onPointer, { passive: true });
-
-  /* Off the window, the room settles rather than stopping. */
-  window.addEventListener('pointerout', function (e) {
-    if (!e.relatedTarget) { pointerLive = false; cursorOff(); }
-  });
-  window.addEventListener('blur', function () { pointerLive = false; keyDir = 0; });
-
-  /* Trackpad and wheel are an impulse into the same momentum, not a second
-     way of setting position — a shove, which the easing then spends. */
-  room.addEventListener('wheel', function (e) {
-    /* Ctrl- and meta-wheel are the browser's zoom, not the archive's. */
-    if (e.ctrlKey || e.metaKey) return;
-    var d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    if (!d) return;
-    e.preventDefault();
-    vel += Math.max(-90, Math.min(90, d)) * 0.28;
-    /* A trackpad sends a flurry rather than a notch, and an uncapped sum of
-       one is a jump cut. The ceiling is a shove that outruns the pointer
-       without leaving the room behind. */
-    var lid = MAXV * 2.4;
-    vel = Math.max(-lid, Math.min(lid, vel));
-    retireCue();
-  }, { passive: false });
-
-  window.addEventListener('keydown', function (e) {
-    if (viewerOpen) return;
-    if (e.key === 'ArrowRight') { keyDir = 1; retireCue(); }
-    else if (e.key === 'ArrowLeft') { keyDir = -1; retireCue(); }
-    else if (e.key === 'Home') { pos = 0; vel = 0; }
-    else if (e.key === 'End') { pos = maxX; vel = 0; }
-    else return;
-    e.preventDefault();
-  });
-  window.addEventListener('keyup', function (e) {
-    if (e.key === 'ArrowRight' && keyDir === 1) keyDir = 0;
-    if (e.key === 'ArrowLeft' && keyDir === -1) keyDir = 0;
-  });
-
-  /* Tab is a legitimate way through the archive, so focus moves the camera
-     rather than leaving the reader looking at an empty room. */
-  rail.addEventListener('focusin', function (e) {
-    var el = e.target.closest('.frame');
-    if (!el) return;
-    for (var i = 0; i < items.length; i++) {
-      if (items[i].el === el) {
-        pos = Math.max(0, Math.min(maxX, items[i].x - (vw - items[i].w) / 2));
-        vel = 0;
-        retireCue();
-        break;
-      }
-    }
-  });
-
-  /* --- touch: a drag with momentum, and nothing to do with the pointer --- */
-
-  var tStart = 0, tPos = 0, tLast = 0, tTime = 0;
-
-  room.addEventListener('touchstart', function (e) {
-    if (viewerOpen || e.touches.length !== 1) return;
-    dragging = true;
-    tStart = tLast = e.touches[0].clientX;
-    tPos = pos;
-    tTime = e.timeStamp;
-    vel = 0;
-    retireCue();
-  }, { passive: true });
-
-  room.addEventListener('touchmove', function (e) {
-    if (!dragging || e.touches.length !== 1) return;
-    var x = e.touches[0].clientX;
-    /* Only claim the gesture once it is clearly horizontal, so a vertical
-       flick still belongs to the browser. */
-    if (Math.abs(x - tStart) > 8 && e.cancelable) e.preventDefault();
-    pos = Math.max(-60, Math.min(maxX + 60, tPos + (tStart - x)));
-
-    /* The throw is measured over a real interval, never over the sub-
-       millisecond gap between two events in the same tick — that reads as
-       a velocity of thousands and hurls the room to the far wall. Sampled
-       every 6ms or so, and capped, so a hard flick is a hard flick and not
-       a teleport. */
-    var dt = e.timeStamp - tTime;
-    if (dt > 6) {
-      var v = ((tLast - x) / dt) * 16.667;
-      vel = Math.max(-MAXV * 2.4, Math.min(MAXV * 2.4, v));
-      tLast = x;
-      tTime = e.timeStamp;
-    }
-  }, { passive: false });
-
-  room.addEventListener('touchend', function () { dragging = false; }, { passive: true });
-  room.addEventListener('touchcancel', function () { dragging = false; }, { passive: true });
-
-  /* --- the loop --- */
-
-  var last = 0, tick = 0;
-
-  function step(t) {
-    requestAnimationFrame(step);
-    var dt = last ? Math.min(3, (t - last) / 16.667) : 1;
-    last = t;
-
-    if (!dragging && !viewerOpen) {
-      var want = 0;
-      if (pointerLive && !reduced.matches && !coarse.matches) want += throttle(norm) * MAXV;
-      if (keyDir) want += keyDir * MAXV * 0.6;
-
-      /* Framerate-independent easing: the same settle on a 60Hz panel and a
-         120Hz one, which a bare vel += (want - vel) * EASE is not. */
-      vel += (want - vel) * (1 - Math.pow(1 - EASE, dt));
-      pos += vel * dt;
-
-      /* The ends are a wall the camera leans on, not one it bounces off. */
-      if (pos < 0) { pos = 0; vel *= 0.3; }
-      else if (pos > maxX) { pos = maxX; vel *= 0.3; }
-      if (Math.abs(vel) < 0.01) vel = 0;
-    } else if (dragging) {
-      if (pos < 0) pos *= 0.86;
-      if (pos > maxX) pos = maxX + (pos - maxX) * 0.86;
-    }
-
-    render();
-    cursorStep(dt);
-
-    /* The bookkeeping does not need sixty a second. */
-    if ((tick++ % 6) === 0) {
-      promote(false);
-      readout();
-      /* Self-heal: a viewport that changed without a resize event — a
-         background tab arriving at its real size, a phone's address bar
-         collapsing — is caught here rather than left as a wrong room. */
-      var iw = window.innerWidth, ih = window.innerHeight;
-      if (iw && ih && (iw !== vw || Math.abs(ih - vh) > 80) && !viewerOpen) relayout();
-    }
-  }
-
-  var lastRendered = -1;
-
-  function render(force) {
-    if (!force && Math.abs(pos - lastRendered) < 0.01) return;
-    lastRendered = pos;
-    planes.back.style.transform = 'translate3d(' + (-pos * DEPTH.back).toFixed(2) + 'px,0,0)';
-    planes.main.style.transform = 'translate3d(' + (-pos).toFixed(2) + 'px,0,0)';
-    planes.fore.style.transform = 'translate3d(' + (-pos * DEPTH.fore).toFixed(2) + 'px,0,0)';
-  }
-
-  /* --- the readout: a hairline and a number --- */
-
-  var runEl = document.querySelector('[data-progress]');
-  var countEl = document.querySelector('[data-count]');
-  var lastCount = -1;
-
-  function readout() {
-    if (runEl && maxX > 0) {
-      runEl.style.transform = 'scaleX(' + (Math.max(0, Math.min(1, pos / maxX))).toFixed(4) + ')';
-    }
-    if (!countEl) return;
-    /* Whichever frame the middle of the screen is nearest — the archive's
-       own count of where you are standing. */
-    var mid = pos + vw / 2, best = 0, bd = Infinity;
-    for (var i = 0; i < items.length; i++) {
-      var d = Math.abs(items[i].x + items[i].w / 2 - mid);
-      if (d < bd) { bd = d; best = i; }
-    }
-    if (best !== lastCount) { lastCount = best; countEl.textContent = pad(best + 1); }
-  }
-
-  function pad(n) { return (n < 100 ? (n < 10 ? '00' : '0') : '') + n; }
-
-  /* ---------------------------------------------------------------
-     7. THE CURSOR
-     Says which way the room is about to go, and what is under it.
-     --------------------------------------------------------------- */
-
-  var cur = document.querySelector('[data-cursor]');
-  var curMark = document.querySelector('[data-cursor-mark]');
-  var cx = 0, cy = 0, ctx = 0, cty = 0, curState = '';
-
-  function cursorTo(x, y) {
-    ctx = x; cty = y;
-    if (cur && !cur.classList.contains('is-on') && !coarse.matches) {
-      cx = x; cy = y;
-      cur.classList.add('is-on');
-    }
-  }
-  function cursorOff() { if (cur) cur.classList.remove('is-on'); }
-
-  function cursorStep(dt) {
-    if (!cur || coarse.matches) return;
-    cx += (ctx - cx) * Math.min(1, 0.22 * dt);
-    cy += (cty - cy) * Math.min(1, 0.22 * dt);
-    cur.style.transform = 'translate3d(' + cx.toFixed(1) + 'px,' + cy.toFixed(1) + 'px,0)';
-
-    var want;
-    if (hoverKind === 'film') want = 'Play';
-    else if (hoverKind === 'shot') want = 'View';
-    else if (norm < -0.34) want = '←';
-    else if (norm > 0.34) want = '→';
-    else want = '●';
-
-    if (want !== curState) {
-      curState = want;
-      curMark.textContent = want;
-      cur.className = 'cursor is-on cursor--' +
-        (want === 'Play' || want === 'View' ? 'word' : (want === '●' ? 'dot' : 'arrow'));
-    }
-  }
-
-  var hoverKind = '';
-  rail.addEventListener('pointerover', function (e) {
-    var el = e.target.closest('.frame');
-    hoverKind = el ? (el.classList.contains('frame--film') ? 'film' : 'shot') : '';
-  });
-  rail.addEventListener('pointerout', function (e) {
-    if (!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('.frame')) hoverKind = '';
-  });
-
-  /* --- the cue: shown once, retired by the first movement of any kind --- */
 
   var cue = document.querySelector('[data-cue]');
   var cueGone = false;
   function retireCue() {
     if (cueGone || !cue) return;
     cueGone = true;
-    cue.classList.add('is-out');
-    setTimeout(function () { cue.remove(); }, 500);
+    cue.classList.add('is-gone');
+    setTimeout(function () { if (cue.parentNode) cue.parentNode.removeChild(cue); }, 900);
+  }
+
+  var cur = document.querySelector('[data-cursor]');
+  var curMark = document.querySelector('[data-cursor-mark]');
+  var fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+  var curOn = false, hoverOn;
+
+  function cursorTo(x, y) {
+    if (!cur || !fine) return;
+    cur.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
+    if (!curOn) { curOn = true; cur.classList.add('is-on'); }
+  }
+  function cursorOff() {
+    if (!cur || !curOn) return;
+    curOn = false; cur.classList.remove('is-on');
+  }
+
+  if (fine && cur && curMark) {
+    room.addEventListener('pointermove', function (e) {
+      var el = document.elementFromPoint(e.clientX, e.clientY);
+      var fr = el && el.closest ? el.closest('.frame') : null;
+      var id = fr ? fr.getAttribute('data-of') : null;
+      if (id === hoverOn) return;
+      hoverOn = id;
+      cur.className = 'cursor is-on ' + (id ? 'cursor--word' : 'cursor--dot');
+      curMark.textContent = id ? titleOf(id) : '●';
+    }, { passive: true });
   }
 
   /* ---------------------------------------------------------------
-     8. THE FRAME THAT OPENS
-     A click measures the frame where it stands and grows that same frame
-     to the stage. The aspect never changes, so the whole transition is a
-     translate and a scale on one element — no fade to black, and nothing
-     for the browser to lay out mid-flight.
+     10. THE FRAME THAT OPENS
+
+     A click measures the frame where it stands and grows that same frame to
+     the stage. The aspect never changes, so the whole transition is a
+     translate and a scale on one element. The wall keeps moving underneath,
+     so closing measures again rather than trusting where it started.
      --------------------------------------------------------------- */
 
   var viewer = document.querySelector('[data-viewer]');
   var stage = document.querySelector('[data-viewer-stage]');
   var vTitle = document.querySelector('[data-viewer-title]');
   var vAt = document.querySelector('[data-viewer-at]');
+  var viewerOpen = false;
   var current = null;
-  var returnTo = null;
+
+  function screenRect(it) {
+    return {
+      x: it.x + vw / 2 - cam.x - it.w / 2,
+      y: it.y + vh / 2 - cam.y - it.h / 2,
+      w: it.w, h: it.h
+    };
+  }
 
   function stageRect(ratio) {
     var m = Math.min(vw, vh) * (small ? 0.06 : 0.09);
@@ -876,128 +892,112 @@
 
   function fill(it) {
     stage.textContent = '';
-    if (it.kind === 'film') {
+    if (it.kind === 'cut') {
       var v = document.createElement('video');
       v.src = it.src;
       v.controls = true;
-      v.autoplay = true;
       v.loop = true;
       v.playsInline = true;
       v.setAttribute('playsinline', '');
-      v.poster = it.film ? it.film.poster : '';
-      if (it.video) { v.poster = it.video.poster; v.currentTime = it.video.currentTime || 0; }
+      v.poster = it.video ? it.video.poster : '';
+      if (it.video) v.currentTime = it.video.currentTime || 0;
       stage.appendChild(v);
     } else {
       var img = document.createElement('img');
       img.alt = '';
-      img.decoding = 'async';
-      /* The strip thumb is already decoded, so it is what the frame grows
-         with; the full view slots in underneath it once it lands. */
-      img.src = it.dir + it.slug + '-thumb.webp';
+      img.src = it.stem + '-thumb.webp';
       stage.appendChild(img);
       var full = new Image();
       full.onload = function () { if (current === it) img.src = full.src; };
-      full.src = it.dir + it.slug + '-view.webp';
+      full.src = it.stem + '-view.webp';
     }
-    if (vTitle) vTitle.textContent = it.title || '';
-    if (vAt) vAt.textContent = it.kind === 'film' ? 'Cut' : pad(it.at + 1) + ' / ' + pad(viewable.length);
+    if (vTitle) vTitle.textContent = it.title;
+    if (vAt) {
+      vAt.textContent = it.kind === 'cut' ? 'Cut'
+        : pad2(viewable.indexOf(it) + 1) + ' / ' + pad2(viewable.length);
+    }
   }
 
   function openViewer(it) {
-    if (viewerOpen) return;
+    if (viewerOpen || !viewer) return;
     viewerOpen = true;
     current = it;
-    returnTo = it.el.querySelector('.frame__btn');
+    order.forEach(function (o) { if (o.video && !o.video.paused) o.video.pause(); });
 
-    items.forEach(function (o) { if (o.video && !o.video.paused) o.video.pause(); });
+    var from = screenRect(it);
+    var target = stageRect(it.ratio);
 
-    var from = it.el.getBoundingClientRect();
-    var to = stageRect(it.ratio);
-
-    fill(it);
     viewer.hidden = false;
     viewer.setAttribute('aria-hidden', 'false');
-    stage.style.width = to.w + 'px';
-    stage.style.height = to.h + 'px';
-    stage.style.transformOrigin = '0 0';
+    fill(it);
+
+    stage.style.width = target.w + 'px';
+    stage.style.height = target.h + 'px';
+    stage.style.left = target.x + 'px';
+    stage.style.top = target.y + 'px';
     stage.style.transition = 'none';
-    stage.style.transform = 'translate3d(' + from.left + 'px,' + from.top + 'px,0) scale(' + (from.width / to.w) + ')';
-    it.el.style.visibility = 'hidden';
-    it.vis = false;
+    stage.style.transformOrigin = '0 0';
+    stage.style.transform = 'translate(' + (from.x - target.x) + 'px,' + (from.y - target.y) +
+      'px) scale(' + (from.w / target.w) + ',' + (from.h / target.h) + ')';
 
-    /* One forced read, on purpose: the start transform has to be committed
-       before the end one is set or there is no transition to run. */
-    void stage.offsetWidth;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        viewer.classList.add('is-open');
+        stage.style.transition = 'transform 620ms cubic-bezier(0.22, 1, 0.36, 1)';
+        stage.style.transform = 'translate(0,0) scale(1,1)';
+      });
+    });
 
-    stage.style.transition = reduced.matches ? 'none'
-      : 'transform 620ms cubic-bezier(0.22, 1, 0.36, 1)';
-    stage.style.transform = 'translate3d(' + to.x + 'px,' + to.y + 'px,0) scale(1)';
-    viewer.classList.add('is-open');
-
-    var close = viewer.querySelector('[data-viewer-close]');
-    if (close) close.focus();
+    it.el.style.opacity = '0';
+    document.body.classList.add('is-viewing');
   }
 
   function closeViewer() {
     if (!viewerOpen || !current) return;
     var it = current;
-    var to = stageRect(it.ratio);
-    it.el.style.visibility = '';
-    var back = it.el.getBoundingClientRect();
-    it.el.style.visibility = 'hidden';
+    var target = stageRect(it.ratio);
+    var back = screenRect(it);
 
     viewer.classList.remove('is-open');
-    stage.style.transition = reduced.matches ? 'none'
-      : 'transform 560ms cubic-bezier(0.4, 0, 0.2, 1)';
-    stage.style.transform = 'translate3d(' + back.left + 'px,' + back.top + 'px,0) scale(' + (back.width / to.w) + ')';
+    stage.style.transform = 'translate(' + (back.x - target.x) + 'px,' + (back.y - target.y) +
+      'px) scale(' + (back.w / target.w) + ',' + (back.h / target.h) + ')';
 
-    var done = function () {
+    viewerOpen = false;
+    current = null;
+    document.body.classList.remove('is-viewing');
+
+    setTimeout(function () {
       viewer.hidden = true;
       viewer.setAttribute('aria-hidden', 'true');
       stage.textContent = '';
-      it.el.style.visibility = '';
-      it.vis = true;
-      viewerOpen = false;
-      current = null;
-      if (returnTo) returnTo.focus();
-      promote(false);
-    };
-
-    if (reduced.matches) done();
-    else setTimeout(done, 560);
+      it.el.style.opacity = '';
+    }, 620);
   }
 
-  /* Stepping is a swap, not a second transition: the stage is already the
-     right shape for the next frame before the frame arrives in it. */
   function stepViewer(d) {
-    if (!current || current.kind === 'film') return;
-    var next = viewable[(current.at + d + viewable.length) % viewable.length];
-    var was = current;
+    if (!current || current.kind === 'cut') return;
+    var i = viewable.indexOf(current);
+    if (i < 0) return;
+    var next = viewable[(i + d + viewable.length) % viewable.length];
+    /* Stepping brings the wall with it, so closing puts you back where the
+       frame you are looking at actually lives. */
+    to.x = cam.x = clamp(next.x, -limit.x, limit.x);
+    to.y = cam.y = clamp(next.y, -limit.y, limit.y);
+    vel.x = vel.y = 0;
     current = next;
     fill(next);
-    var to = stageRect(next.ratio);
-    stage.style.transition = 'none';
-    stage.style.width = to.w + 'px';
-    stage.style.height = to.h + 'px';
-    stage.style.transform = 'translate3d(' + to.x + 'px,' + to.y + 'px,0) scale(1)';
-
-    /* The room travels to the frame you are looking at, so closing puts you
-       where the archive says you are. */
-    was.el.style.visibility = '';
-    was.vis = true;
-    pos = Math.max(0, Math.min(maxX, next.x - (vw - next.w) / 2));
-    render(true);
-    promote(false);
-    next.el.style.visibility = 'hidden';
-    next.vis = false;
-    returnTo = next.el.querySelector('.frame__btn');
   }
 
   if (viewer) {
-    viewer.querySelector('[data-viewer-close]').addEventListener('click', closeViewer);
-    viewer.querySelector('[data-viewer-prev]').addEventListener('click', function () { stepViewer(-1); });
-    viewer.querySelector('[data-viewer-next]').addEventListener('click', function () { stepViewer(1); });
-    viewer.querySelector('[data-viewer-ground]').addEventListener('click', closeViewer);
+    var cb = viewer.querySelector('[data-viewer-close]');
+    var pb = viewer.querySelector('[data-viewer-prev]');
+    var nb = viewer.querySelector('[data-viewer-next]');
+    var gr = viewer.querySelector('[data-viewer-ground]');
+    if (cb) cb.addEventListener('click', closeViewer);
+    if (pb) pb.addEventListener('click', function () { stepViewer(-1); });
+    if (nb) nb.addEventListener('click', function () { stepViewer(1); });
+    if (gr) gr.addEventListener('click', closeViewer);
+
     window.addEventListener('keydown', function (e) {
       if (!viewerOpen) return;
       if (e.key === 'Escape') { e.preventDefault(); closeViewer(); }
@@ -1007,23 +1007,13 @@
   }
 
   /* ---------------------------------------------------------------
-     9. GO
+     11. GO
      --------------------------------------------------------------- */
-
-  /* Resize keeps where you were standing, as a fraction of the archive —
-     the room is rebuilt around the camera, not under it. */
-  function relayout() {
-    var where = maxX > 0 ? pos / maxX : 0;
-    layout();
-    pos = where * maxX;
-    render(true);
-    promote(true);
-  }
 
   var rt = 0;
   window.addEventListener('resize', function () {
     clearTimeout(rt);
-    rt = setTimeout(relayout, 160);
+    rt = setTimeout(layout, 160);
   });
 
   layout();

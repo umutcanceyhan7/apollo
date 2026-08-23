@@ -2,25 +2,31 @@
    Apollo Films — the BTS archive.
 
    Every other page on this site is a stack of bands you scroll down.
-   This one is a room you travel through sideways, and it is the only
-   page that is not a document: the viewport is the camera, the page
+   This one is a field you move through in two directions, and it is the
+   only page that is not a document: the viewport is the camera, the page
    is fixed, and the material moves under it.
 
+   It is ONE WALL and every production is mixed across it — Mirage turns up
+   in five corners rather than in a Mirage corner. Nothing here draws a box,
+   a rule or a background behind anything, because the moment one is drawn
+   the wall stops being one wall and starts being a set of panels. The only
+   label is the name the cursor carries.
+
    It borrows the site's palette and its one typeface at one weight and
-   nothing else. There is no masthead, no band rhythm and no theme
-   switch here, because the interface on this page is four corner marks
-   and a hairline, and everything else on screen is the footage.
+   nothing else. There is no masthead, no band rhythm and no theme switch,
+   because the interface on this page is four corner marks and everything
+   else on screen is the footage.
 
    Layout is written by assets/js/archive.js: every frame is placed with
-   inline left/top/width/height in pixels, against a composition scored
-   in that file. What lives here is the room, the interface, and the
-   states — never a position.
+   inline left/top/width/height in pixels, against a composition scored in
+   that file. What lives here is the room, the interface, and the states —
+   never a position.
    ============================================================ */
 
 /* --- the room ------------------------------------------------------------
    The document does not scroll in either axis. Travel is a transform on
-   one element, which is the whole reason this can hold sixty frames and
-   two films at 60fps. */
+   eight elements, which is the whole reason this can hold forty frames and
+   two cuts at 60fps. */
 
 .archive-page {
   position: fixed;
@@ -39,9 +45,9 @@
 .archive {
   position: fixed;
   inset: 0;
-  /* pan-y so a vertical flick still belongs to the browser — on a phone the
-     horizontal drag is ours and nothing else is. */
-  touch-action: pan-y;
+  /* Both axes belong to us here — this is a field, not a page with a
+     sideways gimmick, and a vertical flick is travel rather than scroll. */
+  touch-action: none;
   cursor: none;
 }
 
@@ -52,28 +58,18 @@
   .archive { cursor: default; }
 }
 
-.archive__rail {
+.archive.is-dragging { cursor: grabbing; }
+
+.field {
   position: absolute;
   inset: 0;
   outline: none;
-}
-
-.plane {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  /* Only the three planes are promoted, never the frames inside them. Sixty
-     composited layers is a memory bill; three is a rounding error. */
+  /* The only promoted layer on the page. One composited surface carrying
+     forty-one frames costs a rounding error; forty-one promoted frames is a
+     memory bill. */
   will-change: transform;
   transform: translate3d(0, 0, 0);
 }
-
-/* Depth is carried by the plane, so a frame never has to know which one it
-   is on. The far plane sits back in the light as well as in the movement —
-   the archive is one room, and the wall behind you is dimmer. */
-.plane--back { opacity: 0.5; }
-.plane--fore { opacity: 1; }
 
 /* --- a frame -------------------------------------------------------------
    No card, no border, no radius, no shadow. A photograph on a wall is a
@@ -86,12 +82,32 @@
   overflow: hidden;
   background: rgba(var(--ink-rgb), 0.05);
   opacity: 0;
+  /* Transform is written by the engine every frame — the lean and the lift
+     toward the cursor — so it is deliberately NOT transitioned here. The
+     easing lives in the loop, where it can be interrupted mid-move; a CSS
+     transition on top of it would fight it and lag it. */
   transition: opacity 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: 50% 50%;
 }
 
-/* Set by the engine the moment the image has decoded, so nothing ever
+/* Set by the engine the moment the picture has decoded, so nothing ever
    appears as a half-painted band while the room is moving. */
-.frame.is-in { opacity: 0.88; }
+.frame.is-in { opacity: 0.86; }
+
+/* --- revealed by the camera ----------------------------------------------
+   A frame waits a little under its true size until the visitor's own
+   movement carries it properly inside the viewport, and then settles into
+   place. The scale sits on the BUTTON rather than on the figure because the
+   figure's transform belongs to the cursor lean and is rewritten every
+   frame — two owners on one property is a fight, and nesting them is free.
+
+   It runs once per frame per visit. A wall where every photograph breathes
+   again each time you cross back over it is a screensaver. */
+.frame__btn {
+  transform: scale(0.88);
+  transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.frame.is-shown .frame__btn { transform: scale(1); }
 
 .frame img,
 .frame video {
@@ -99,8 +115,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* The still is held at 1.03 so the hover has somewhere to settle back
-     from — a photograph easing to its true size rather than growing. */
+  /* Held at 1.03 so approaching has somewhere to settle back from — a
+     photograph easing to its true size rather than growing. The engine
+     puts `is-near` on as the cursor comes within reach. */
   transform: scale(1.03);
   transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -122,29 +139,29 @@
   outline-offset: 3px;
 }
 
-/* Hover is one stop of light and a settle, and that is the entire
-   interaction. Keyboard focus gets the same, so tabbing through the
-   archive reads the same way travelling through it does. */
-.frame.is-in:hover,
+/* Nearness is one stop of light and a settle, and that is the entire
+   interaction. Keyboard focus gets the same, so tabbing through the archive
+   reads the way travelling through it does. */
+.frame.is-in.is-near,
 .frame.is-in:focus-within { opacity: 1; }
-.frame:hover img,
+.frame.is-near img,
+.frame.is-near video,
 .frame:focus-within img,
-.frame:hover video,
 .frame:focus-within video { transform: scale(1); }
 
 /* --- a cut ---------------------------------------------------------------
-   The two films are the largest things in the room and they are the only
-   things in it that move on their own. They are given a hairline and a
-   slate, which no photograph gets, so that arriving at one is an event
-   rather than another frame. */
+   The largest things on the wall, and the only ones that move on their own. It is given a hairline and a slate, which
+   no photograph gets, so that arriving at one is an event rather than
+   another frame. */
 
 /* The slate hangs below the frame, and `.frame` clips its contents — so a
    cut is the one frame that does not. Nothing needs clipping inside it
-   anyway: the video is cut to the same 9:16 the frame is drawn at. */
-.frame--film { opacity: 0; overflow: visible; }
-.frame--film.is-in { opacity: 1; }
+   anyway: the frame is drawn at the aspect of whichever cut this viewport
+   was given, tall on a phone and wide where there is width for it. */
+.frame--cut { opacity: 0; overflow: visible; }
+.frame--cut.is-in { opacity: 1; }
 
-.frame--film::after {
+.frame--cut::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -152,86 +169,36 @@
   pointer-events: none;
 }
 
-.frame--film video { transform: none; transition: none; }
+.frame--cut video { transform: none; transition: none; }
 
-/* --- the line ------------------------------------------------------------
-   One sentence broken across the travel and set into the bands the score
-   leaves empty. It is type on a wall, not a caption on a photograph: no
-   box, no rule, nothing behind it. Held a stop back from full ink so the
-   photographs stay the brightest thing in the room, and brought up when the
-   camera reaches it. */
+/* --- the slate -----------------------------------------------------------
+   Hung off the bottom edge rather than anchored to it, so that a slate
+   forced onto a second line grows down into the air under the cut —
+   anchoring the bottom would have grown it up over the last inch of the
+   picture instead.
 
-.word {
-  position: absolute;
-  margin: 0;
-  white-space: nowrap;
-  font-size: clamp(30px, 4.4vw, 76px);
-  line-height: 1;
-  letter-spacing: var(--tight-lg);
-  color: var(--ink);
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity 900ms cubic-bezier(0.22, 1, 0.36, 1),
-              transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: none;
-}
-.word.is-in { opacity: 0.72; transform: none; }
-
-/* --- the sign-off --------------------------------------------------------
-   The end of the travel. The sentence whole, and the one way out of the
-   archive that is not the corner nav. */
-
-.signoff {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: clamp(26px, 3vw, 44px);
-  width: max-content;
-  max-width: min(88vw, 900px);
-  opacity: 0;
-  transform: translateY(18px);
-  transition: opacity 1s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 1s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.signoff.is-in { opacity: 1; transform: none; }
-
-.signoff__line {
-  margin: 0;
-  font-size: clamp(32px, 5vw, 88px);
-  line-height: 1.04;
-  letter-spacing: var(--tight-xl);
-  color: var(--ink);
-  text-wrap: balance;
-  white-space: normal;
-}
-
-/* The site's one action pattern: a hairline outline, never a fill. */
-.signoff__cta {
-  display: inline-block;
-  padding: 14px 26px;
-  border: 1px solid currentColor;
-  color: var(--ink);
-  text-decoration: none;
-  font-size: 14px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  opacity: 0.85;
-  transition: opacity 180ms ease;
-}
-.signoff__cta:hover { opacity: 1; }
-.signoff__cta:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
+   It is set to the width of the frame and allowed to wrap. A slate is one
+   line of type wherever there is room for one, but "La Casa De Raisa
+   Vanessa" set at this tracking is wider than the cut is on a small phone,
+   and a title running out past the edge of its own picture is worse than a
+   title on two lines. */
 
 .slate {
   position: absolute;
   left: 0;
-  bottom: -1.9em;
+  top: 100%;
+  width: 100%;
+  margin-top: 0.3em;
   display: flex;
-  gap: 0.9em;
+  flex-wrap: wrap;
+  gap: 0 0.9em;
   align-items: baseline;
-  white-space: nowrap;
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  /* Eases off on a narrow room so a wrapped title costs two lines rather
+     than three. 11px and 0.18em are what every viewport with the width for
+     them still gets. */
+  font-size: clamp(9px, 2.4vw, 11px);
+  line-height: 1.6;
+  letter-spacing: clamp(0.14em, 0.6vw, 0.18em);
   text-transform: uppercase;
   opacity: var(--o-dim);
   pointer-events: none;
@@ -239,24 +206,76 @@
 
 .slate__run { opacity: var(--o-rest); }
 
+/* --- the map ------------------------------------------------------------
+   The whole wall at a glance, and the one element on the page whose job is
+   to say that the archive is FINITE. It is a rectangle with a hairline
+   round it, forty-one marks inside it and a box showing where you are
+   standing — no labels, no controls, nothing to click.
+
+   It is not navigation. You cannot drive from here; it only answers the
+   question an unbounded canvas leaves permanently open, which is "how much
+   more of this is there". */
+
+.map {
+  position: fixed;
+  right: clamp(18px, 2.4vw, 30px);
+  bottom: clamp(52px, 6vw, 72px);
+  z-index: 40;
+  width: clamp(112px, 12vw, 168px);
+  aspect-ratio: 5 / 4;
+  border: 1px solid rgba(var(--ink-rgb), 0.22);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+.archive-page:hover .map { opacity: 0.72; }
+
+.map__wall {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Where you are standing. The only thing in here that moves. */
+.map__view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 1px solid var(--ink);
+  opacity: 0.9;
+  will-change: transform;
+}
+
+@media (max-width: 700px) {
+  /* A phone has neither the room for it nor the pointer to read it with. */
+  .map { display: none; }
+}
+
 /* --- veil ----------------------------------------------------------------
-   The edges of the travel fall off instead of ending, so the room reads as
-   continuing past the viewport rather than being cropped by it. */
+   The edges of the field fall off instead of ending, so the room reads as
+   continuing past the viewport in every direction rather than being cropped
+   by it. One radial, because there is no longer a direction of travel for a
+   pair of side gradients to belong to. */
 
 .archive__veil {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, var(--ground) 0%, rgba(var(--ground-rgb), 0) 9%,
-                    rgba(var(--ground-rgb), 0) 91%, var(--ground) 100%),
-    radial-gradient(120% 90% at 50% 50%, rgba(var(--ground-rgb), 0) 55%,
-                    rgba(var(--ground-rgb), 0.55) 100%);
+    /* The two rules the corner marks sit on. A photograph travelling under
+       the interface is the normal case here, not the exception, and an 11px
+       mark at a third opacity disappears entirely over a bright one. */
+    linear-gradient(to bottom, rgba(var(--ground-rgb), 0.66) 0%,
+                    rgba(var(--ground-rgb), 0) 11%),
+    linear-gradient(to top, rgba(var(--ground-rgb), 0.7) 0%,
+                    rgba(var(--ground-rgb), 0) 13%),
+    radial-gradient(132% 112% at 50% 50%, rgba(var(--ground-rgb), 0) 52%,
+                    rgba(var(--ground-rgb), 0.62) 100%);
 }
 
 /* --- the interface: four corners -----------------------------------------
-   Fixed while the room moves under them. All four are the same 11px mark
-   at the same tracking; none of them is allowed to become a heading. */
+   Fixed while the room moves under them. All four are the same 11px mark at
+   the same tracking; none of them is allowed to become a heading. */
 
 .hud {
   position: fixed;
@@ -290,38 +309,44 @@ a.hud:focus-visible, .hud a:focus-visible { outline: 1px solid currentColor; out
 
 .hud--tl { opacity: var(--o-hold); }
 
+/* Top left is the way out of the room, so it carries the mark rather than
+   the name — same asset and same technique as the masthead: a mask filled
+   with currentColor, so one white-on-transparent file works on this ground
+   too. The words stay in the markup as .sr-only text, so a reader and a
+   crawler still meet "Apollo Films" and not an empty link.
+
+   The corner sits at clamp(18px, 2.4vw, 30px) with nothing to push against,
+   so this height is free of the masthead's bar arithmetic and is set purely
+   to read at a glance across a dark field. */
+.hud--brand {
+  display: block;
+  width: 122px;
+  height: 52px;
+  background: currentColor;
+  -webkit-mask: url(../Apollo+Beyaz+Logo.webp) no-repeat left center;
+  mask: url(../Apollo+Beyaz+Logo.webp) no-repeat left center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+@supports not ((-webkit-mask: url('')) or (mask: url(''))) {
+  .hud--brand { width: auto; height: auto; background: none; }
+  .hud--brand .sr-only {
+    position: static; width: auto; height: auto;
+    margin: 0; overflow: visible; clip: auto;
+  }
+}
+
 .hud--bl { display: flex; align-items: baseline; gap: 1.6em; }
 .hud__nav { display: flex; gap: 1.4em; opacity: var(--o-rest); }
+
+/* Bottom right names whatever the camera is nearest. In a field there is no
+   position to report as a fraction — a hairline filling up says nothing
+   about where you are when you can travel in two directions — so the room
+   reports the production you are standing in instead. */
 .hud--br { display: flex; align-items: baseline; gap: 0.6em; }
-.hud__count { font-variant-numeric: tabular-nums; opacity: 1; }
+.hud__near { opacity: 1; }
 .hud__of { font-variant-numeric: tabular-nums; opacity: var(--o-quiet); }
-
-/* --- progress ------------------------------------------------------------
-   A hairline the width of the room with the travelled part inked. It is the
-   only thing on the page that reports position, and at 1px it reports it
-   without being read. */
-
-.progress {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  z-index: 40;
-  background: rgba(var(--ink-rgb), 0.14);
-  pointer-events: none;
-}
-
-.progress__run {
-  display: block;
-  height: 100%;
-  width: 100%;
-  background: var(--ink);
-  opacity: 0.62;
-  transform: scaleX(0);
-  transform-origin: 0 50%;
-  will-change: transform;
-}
 
 /* --- the cue -------------------------------------------------------------
    Shown on arrival, retired by the first movement of any kind, and never
@@ -345,7 +370,7 @@ a.hud:focus-visible, .hud a:focus-visible { outline: 1px solid currentColor; out
   animation: cue-in 900ms cubic-bezier(0.22, 1, 0.36, 1) 900ms forwards;
 }
 
-.cue.is-out { animation: none; opacity: 0; transition: opacity 420ms ease; }
+.cue.is-gone { animation: none; opacity: 0; transition: opacity 420ms ease; }
 
 @keyframes cue-in { to { opacity: var(--o-nav); } }
 
@@ -353,22 +378,21 @@ a.hud:focus-visible, .hud a:focus-visible { outline: 1px solid currentColor; out
   display: inline-block;
   animation: cue-breathe 2.6s ease-in-out infinite;
 }
-.cue__arrow:last-child { animation-delay: 1.3s; }
 
 @keyframes cue-breathe {
-  0%, 100% { opacity: 0.35; transform: translateX(0); }
-  50%      { opacity: 1;    transform: translateX(-3px); }
+  0%, 100% { opacity: 0.35; transform: translate(0, 0); }
+  50%      { opacity: 1;    transform: translate(-3px, -2px); }
 }
-.cue__arrow:last-child { animation-name: cue-breathe-r; }
+.cue__arrow:last-child { animation-name: cue-breathe-r; animation-delay: 1.3s; }
 @keyframes cue-breathe-r {
-  0%, 100% { opacity: 0.35; transform: translateX(0); }
-  50%      { opacity: 1;    transform: translateX(3px); }
+  0%, 100% { opacity: 0.35; transform: translate(0, 0); }
+  50%      { opacity: 1;    transform: translate(3px, 2px); }
 }
 
 /* --- the cursor ----------------------------------------------------------
-   It says which way the room is about to go and what is under it. A dot at
-   rest, an arrow at the edges, a word over a frame. It is never larger than
-   a caption and it never carries a fill. */
+   It says what is under it and nothing else. A dot over the field, a word
+   over a frame. It is never larger than a caption and never carries a
+   fill. */
 
 .cursor {
   position: fixed;
@@ -402,7 +426,7 @@ a.hud:focus-visible, .hud a:focus-visible { outline: 1px solid currentColor; out
 .cursor--word .cursor__mark { opacity: 0.95; }
 
 @media (hover: none), (pointer: coarse) {
-  .cursor, .cue { display: none; }
+  .cursor { display: none; }
 }
 
 /* --- the viewer ----------------------------------------------------------
@@ -495,9 +519,10 @@ a.hud:focus-visible, .hud a:focus-visible { outline: 1px solid currentColor; out
 @media (max-width: 700px) {
   .viewer__btn--prev, .viewer__btn--next { display: none; }
   .hud--bl, .hud--br, .hud--tl, .hud--tr { font-size: 10px; letter-spacing: 0.16em; }
-  /* The bottom row is where the label, the nav and the count all want to
-     be, and on a phone they meet in the middle. The nav steps up a line so
-     the bottom rule stays one mark at each end. */
+  .hud--brand { width: 88px; height: 38px; }
+  /* The bottom row is where the label, the nav and the name all want to be,
+     and on a phone they meet in the middle. The nav steps up a line so the
+     bottom rule stays one mark at each end. */
   .hud--bl {
     display: grid;
     gap: 0.9em;
@@ -507,13 +532,12 @@ a.hud:focus-visible, .hud a:focus-visible { outline: 1px solid currentColor; out
 }
 
 /* --- reduced motion ------------------------------------------------------
-   The travel is the page, so it cannot be removed — but nothing has to
-   drift on its own. The pointer stops driving the camera (the engine reads
-   this too, and falls back to wheel, keys and drag), the cue stops
-   breathing, and the frames stop easing. */
+   The travel is the page, so it cannot be removed — but nothing has to move
+   on its own. The engine reads this too and stops the frames answering the
+   cursor; here the cue stops breathing and the pictures stop easing. */
 
 @media (prefers-reduced-motion: reduce) {
-  .frame, .frame img, .frame video,
+  .frame, .frame__btn, .frame img, .frame video,
   .viewer__ground, .viewer__btn, .viewer__meta {
     transition-duration: 1ms;
   }
