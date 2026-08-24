@@ -50,7 +50,21 @@
   <div id="film">
 
     <section class="band band--dark band--flush" style="padding-top:0;padding-bottom:0;">
-      <video class="player" data-player controls playsinline preload="metadata"></video>
+      <!-- The film starts itself, silent and looping, the way it does on
+           every other stage on the site. Controls would put a scrub bar over
+           the frame; the only thing to decide here is the sound. -->
+      <div class="filmstage">
+        <video class="player" data-player playsinline muted loop preload="metadata"></video>
+        <button class="soundbtn" type="button" data-sound aria-pressed="false"
+                aria-label="Turn sound on" title="Turn sound on">
+          <svg class="soundbtn__i" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+            <path class="soundbtn__cone" d="M4 7.5h3l4-3v11l-4-3H4z"/>
+            <path class="soundbtn__wave" d="M13.4 7.2a4 4 0 0 1 0 5.6"/>
+            <path class="soundbtn__wave soundbtn__wave--far" d="M15.6 5a7 7 0 0 1 0 10"/>
+            <path class="soundbtn__slash" d="M13.5 7.5l4 5"/>
+          </svg>
+        </button>
+      </div>
     </section>
 
     <section class="band band--dark">
@@ -77,12 +91,24 @@
           <p class="namelist" data-also></p>
         </div>
 
+        <!-- Key art, where the catalogue holds any for this film. Hidden
+             until app.js finds posters against the slug, so a film without
+             them prints no empty heading. It sits directly above the two
+             films either side of it, so the art and the way out share a
+             stretch of page. -->
+        <div class="columns columns--sticky" data-poster-block data-reveal hidden>
+          <p class="label dim">Key art</p>
+          <div class="posters" data-posters></div>
+        </div>
+
         <div class="filmnav" data-reveal>
           <a data-prev href="#">
+            <span class="filmnav__art" data-prev-art hidden></span>
             <span class="label dim">Previous</span>
             <span class="t"></span>
           </a>
           <a data-next href="#">
+            <span class="filmnav__art" data-next-art hidden></span>
             <span class="label dim">Next</span>
             <span class="t"></span>
           </a>
@@ -91,6 +117,17 @@
       </div>
     </section>
 
+  </div>
+
+  <!-- Key art at size. One frame on a black ground, because a poster was
+       drawn to be looked at whole and a strip of thumbnails is only an
+       index of them. Empty until a poster is opened. -->
+  <div class="lightbox" data-lightbox hidden role="dialog" aria-modal="true" aria-label="Key art">
+    <button class="lightbox__close" type="button" data-lightbox-close aria-label="Close">Close</button>
+    <figure class="lightbox__frame">
+      <img class="lightbox__art" data-lightbox-art alt="">
+      <figcaption class="fine dim" data-lightbox-at></figcaption>
+    </figure>
   </div>
 
   <section class="band band--cream">

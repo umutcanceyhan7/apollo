@@ -177,6 +177,48 @@ const ALSO = {
   ]
 };
 
+/* ---- Key art --------------------------------------------------------
+   The posters delivered with the behind-the-scenes set, filed by the film
+   each was cut for (assets/posters/posters.md carries the full table —
+   every title there was read off the poster itself, not off a filename).
+
+   Stems only: each ships at two sizes, `-thumb.webp` at 640px and
+   `-view.webp` at 1600px, and the page picks between them with srcset.
+
+   The catalogue holds some of these films twice — the full cut and its
+   trailer, the same shoot cut two ways — and one set of key art covers
+   both, so those slugs share a list rather than the second one printing
+   no posters at all. */
+
+const POSTER_DIR = 'assets/posters/';
+
+const POSTERS = {
+  mirage: ['mirage-01', 'mirage-02'],
+  amoreserpente: ['amoreserpente-01', 'amoreserpente-02', 'amoreserpente-03'],
+  raisavanessa: [
+    'raisavanessa-01', 'raisavanessa-02', 'raisavanessa-03', 'raisavanessa-04'
+  ],
+  'siedres-x-rafael-indiana-summer-lovers': [
+    'siedres-x-rafael-indiana-summer-lovers-01',
+    'siedres-x-rafael-indiana-summer-lovers-02',
+    'siedres-x-rafael-indiana-summer-lovers-03',
+    'siedres-x-rafael-indiana-summer-lovers-04',
+    'siedres-x-rafael-indiana-summer-lovers-05',
+    'siedres-x-rafael-indiana-summer-lovers-06'
+  ],
+  'drole-de-monsieur-ii-leone': ['drole-de-monsieur-ii-leone'],
+  '3ckc59fzd7gx74wxljygglmg8ga5kh': [
+    'constanze-in-istanbul-01', 'constanze-in-istanbul-02', 'constanze-in-istanbul-03'
+  ],
+  'shopigo-a-summer-odyssey': ['shopigo-a-summer-odyssey'],
+  aureasomnia: ['aureasomnia']
+};
+
+/* The second cut of a film carries the same key art. */
+POSTERS.raisavanessa2 = POSTERS.raisavanessa;
+POSTERS.amoreserpente2 = POSTERS.amoreserpente;
+POSTERS['drole-de-monsieur-ii-leone-dining'] = POSTERS['drole-de-monsieur-ii-leone'];
+
 window.APOLLO_FILMS = [
   {
     slug: 'drole-de-monsieur-ii-leone-dining',
@@ -389,6 +431,11 @@ window.APOLLO_FILMS = [
 const REEL_TO_CUT = {};
 Object.keys(FILE).forEach(function (k) { REEL_TO_CUT[REEL[k]] = CUT[k]; });
 window.APOLLO_FILMS.forEach(function (f) { f.full = REEL_TO_CUT[f.video] || null; });
+
+/* Key art hangs off the film, as stems ready for -thumb / -view. */
+window.APOLLO_FILMS.forEach(function (f) {
+  f.posters = (POSTERS[f.slug] || []).map(function (n) { return POSTER_DIR + n; });
+});
 
 /* The five titles carried by the homepage index, in order. */
 window.APOLLO_INDEX = ['drole-de-monsieur-ii-leone', 'koton', 'jack-daniels', 'drykorn-midnight-in-vienna', 'raisavanessa'];

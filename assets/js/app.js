@@ -653,7 +653,11 @@
       detail.querySelector('[data-title]').textContent = 'Film not found';
       detail.querySelector('[data-cat]').textContent = 'Apollo Films';
       detail.querySelector('[data-client]').textContent = '';
-      if (player) player.remove();
+      /* No film, no stage: the sound button would otherwise be left sitting
+         over an empty black rectangle with nothing to unmute. */
+      var deadStage = detail.querySelector('.filmstage');
+      if (deadStage) deadStage.remove();
+      else if (player) player.remove();
     } else {
       document.title = film.title + ' — Apollo Films';
       detail.querySelector('[data-title]').textContent = film.title;
@@ -664,6 +668,71 @@
       /* The full cut when a media host is configured, the 12s loop when it
          isn't — see FULL in films.js. */
       player.src = film.full || film.video;
+
+      /* The film runs on arrival, silent and looping, and the only control
+         over it is the sound. Muted is the price of autoplay everywhere —
+         a page may not make noise unasked — so the button is the visitor's
+         consent, and pressing it is the gesture that buys the audio.
+
+         Under prefers-reduced-motion nothing starts itself: the poster
+         stands and the native controls come back, so the film is still
+         watchable by hand. */
+      var sound = detail.querySelector('[data-sound]');
+
+      if (reduceMotion) {
+        player.controls = true;
+        player.loop = false;
+        if (sound) sound.remove();
+      } else {
+        player.muted = true;
+        player.setAttribute('muted', '');
+        player.loop = true;
+        player.autoplay = true;
+        player.setAttribute('autoplay', '');
+
+        /* Two things routinely refuse a silent film its start and both undo
+           themselves: a tab opened in the background, which may not play
+           until it is looked at, and a browser holding out for a first
+           gesture. So a refusal waits for whichever it was and asks again,
+           and only a film that will not start after that gets the native
+           controls — a poster with no way into it is the one bad ending. */
+        var tries = 0;
+        function start() {
+          var play = player.play();
+          if (!play || !play.catch) return;
+          play.catch(function () {
+            if (++tries > 3) { player.controls = true; return; }
+            if (document.visibilityState !== 'visible') {
+              document.addEventListener('visibilitychange', start, { once: true });
+            } else {
+              document.addEventListener('pointerdown', start, { once: true });
+              document.addEventListener('keydown', start, { once: true });
+            }
+          });
+        }
+        start();
+      }
+
+      if (sound && !reduceMotion) {
+        sound.addEventListener('click', function () {
+          var on = player.muted;
+          player.muted = !on;
+          if (on) {
+            player.removeAttribute('muted');
+            /* Safari can leave the element paused behind a failed autoplay;
+               the click is a gesture, so this is the moment it will take. */
+            var r = player.play();
+            if (r && r.catch) r.catch(function () {});
+          } else {
+            player.setAttribute('muted', '');
+          }
+          sound.classList.toggle('is-on', on);
+          sound.setAttribute('aria-pressed', String(on));
+          var t = on ? 'Turn sound off' : 'Turn sound on';
+          sound.setAttribute('aria-label', t);
+          sound.title = t;
+        });
+      }
 
       /* Crew and cast share the role/name grid. Both only exist on the
          films we hold a delivered roll for, so each block stays hidden
@@ -698,6 +767,100 @@
         if (alsoBlock) alsoBlock.hidden = false;
       }
 
+      /* Key art. Two sizes ship for every poster, so the strip asks for the
+         640px one and lets a wide screen or a dense display pull the 1600px
+         instead. */
+      var posterRow = detail.querySelector('[data-posters]');
+      var posterBlock = detail.querySelector('[data-poster-block]');
+      if (posterRow && (film.posters || []).length) {
+        film.posters.forEach(function (stem, n) {
+          /* A button, not an image in a link: opening the art is an action on
+             this page, and it has to answer the keyboard the same way it
+             answers a click. */
+          var b = el('button', 'poster');
+          b.type = 'button';
+          b.setAttribute('aria-label', 'View ' + film.title + ' poster ' + (n + 1));
+
+          var img = el('img', 'poster__art');
+          img.srcset = stem + '-thumb.webp 640w, ' + stem + '-view.webp 1600w';
+          img.sizes = '(max-width: 720px) 42vw, 280px';
+          img.src = stem + '-thumb.webp';
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          img.alt = film.title + ' poster ' + (n + 1);
+
+          b.appendChild(img);
+          b.appendChild(el('span', 'poster__view', 'View'));
+          b.addEventListener('click', function () { openArt(n); });
+          posterRow.appendChild(b);
+        });
+        if (posterBlock) posterBlock.hidden = false;
+      }
+
+      /* ---- key art at size ----
+         The strip is an index; this is the poster. It carries its own
+         position in the set, moves with the arrow keys, and gives the
+         focus back to the thumbnail it came from when it closes. */
+      var lb = document.querySelector('[data-lightbox]');
+      var lbArt = document.querySelector('[data-lightbox-art]');
+      var lbAt = document.querySelector('[data-lightbox-at]');
+      var lbClose = document.querySelector('[data-lightbox-close]');
+      var lbAtIndex = -1;
+      var lbFrom = null;
+
+      function showArt(n) {
+        var list = film.posters || [];
+        if (!list.length || !lbArt) return;
+        lbAtIndex = (n + list.length) % list.length;
+        lbArt.src = list[lbAtIndex] + '-view.webp';
+        lbArt.alt = film.title + ' poster ' + (lbAtIndex + 1);
+        if (lbAt) lbAt.textContent = list.length > 1
+          ? film.title + ' — ' + (lbAtIndex + 1) + ' of ' + list.length
+          : film.title;
+      }
+
+      function openArt(n) {
+        if (!lb) return;
+        lbFrom = document.activeElement;
+        showArt(n);
+        lb.hidden = false;
+        /* Hidden is off the layout, so the fade needs the element laid out
+           before the class lands or it starts already arrived. Reading a
+           box forces that; a rAF would not, because a browser holds those
+           back in a tab nobody is looking at and the overlay would then
+           open at nothing. */
+        void lb.offsetWidth;
+        lb.classList.add('is-open');
+        document.documentElement.style.overflow = 'hidden';
+        if (lbClose) lbClose.focus();
+      }
+
+      function closeArt() {
+        if (!lb || lb.hidden) return;
+        lb.classList.remove('is-open');
+        document.documentElement.style.overflow = '';
+        var done = function () { lb.hidden = true; lbArt.removeAttribute('src'); };
+        if (reduceMotion) done();
+        else setTimeout(done, 220);
+        if (lbFrom && lbFrom.focus) lbFrom.focus();
+        lbFrom = null;
+      }
+
+      if (lb) {
+        /* The ground closes, the poster does not — a click on the art itself
+           is the one place in the overlay that should do nothing. */
+        lb.addEventListener('click', function (e) {
+          if (e.target === lbArt) return;
+          closeArt();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (lb.hidden) return;
+          if (e.key === 'Escape') { closeArt(); return; }
+          if (e.key === 'ArrowRight') { e.preventDefault(); showArt(lbAtIndex + 1); }
+          if (e.key === 'ArrowLeft') { e.preventDefault(); showArt(lbAtIndex - 1); }
+        });
+      }
+
       var i = films.indexOf(film);
       var prev = films[(i - 1 + films.length) % films.length];
       var next = films[(i + 1) % films.length];
@@ -708,6 +871,30 @@
       prevEl.querySelector('.t').textContent = prev.title;
       nextEl.href = 'film.html?f=' + encodeURIComponent(next.slug);
       nextEl.querySelector('.t').textContent = next.title;
+
+      /* The film either side gets its own key art where it has any, and its
+         catalogue still where it doesn't — so both ways out carry a picture
+         rather than one of them being the only one that does. */
+      function navArt(link, f) {
+        var slot = link.querySelector('.filmnav__art');
+        if (!slot) return;
+        var img = el('img');
+        var stem = (f.posters || [])[0];
+        if (stem) {
+          img.srcset = stem + '-thumb.webp 640w, ' + stem + '-view.webp 1600w';
+          img.sizes = '160px';
+          img.src = stem + '-thumb.webp';
+        } else {
+          img.src = f.still;
+        }
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.alt = '';
+        slot.appendChild(img);
+        slot.hidden = false;
+      }
+      navArt(prevEl, prev);
+      navArt(nextEl, next);
     }
   }
 

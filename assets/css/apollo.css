@@ -1472,6 +1472,186 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   display: block;
 }
 
+/* The film fills the stage and the sound button is the only mark on it, so
+   the stage is nothing but the positioning context. */
+.filmstage { position: relative; }
+
+/* One control, top right, over footage that could be any colour underneath
+   it — so it carries its own ground rather than trusting the frame. The
+   ground is the projection black in both modes and the mark is the cream:
+   this button sits on film, not on the page, and the film is lit the same
+   way whatever hour the room is at. */
+.soundbtn {
+  all: unset;
+  position: absolute;
+  top: clamp(14px, 2vw, 24px);
+  right: clamp(14px, 2vw, 24px);
+  z-index: 2;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--cream);
+  background: rgba(6, 6, 3, 0.55);
+  backdrop-filter: blur(6px);
+  opacity: var(--o-hold);
+  transition: opacity 0.18s ease, background 0.18s ease;
+}
+
+.soundbtn:hover { opacity: 1; background: rgba(6, 6, 3, 0.75); }
+.soundbtn:focus-visible { outline: 1px solid var(--cream); outline-offset: 4px; }
+
+.soundbtn__i { display: block; width: 20px; height: 20px; overflow: visible; }
+.soundbtn__cone { fill: currentColor; stroke: none; }
+.soundbtn__wave {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  /* Silent at rest: the waves are drawn but not yet leaving the cone. */
+  opacity: 0;
+  transform-origin: 11px 10px;
+  transform: scale(0.7);
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.soundbtn__wave--far { transition-delay: 0.06s; }
+
+.soundbtn__slash {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  transition: opacity 0.18s ease;
+}
+
+.soundbtn.is-on .soundbtn__wave { opacity: 1; transform: scale(1); }
+.soundbtn.is-on .soundbtn__slash { opacity: 0; }
+
+/* Key art, in the credits' own two columns. A row that scrolls sideways
+   rather than a grid that reflows: a poster is a fixed object and six of
+   them are a stack on a table, not a gallery wall. */
+.posters {
+  display: flex;
+  gap: clamp(12px, 1.6vw, 22px);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  /* The strip runs to the gutter on a phone, so it needs the room the band
+     takes off it back — otherwise the last poster stops short of the edge
+     and reads as a mistake. */
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+/* Height is what is set, not width: the delivered art is 4:5 and 3:4 by
+   turns, and cropping every poster to one rectangle would trim the artwork
+   a designer laid out. They hang from one line and keep their own shape. */
+.poster {
+  all: unset;
+  cursor: pointer;
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  height: clamp(210px, 26vw, 340px);
+  scroll-snap-align: start;
+  background: var(--black);
+}
+
+.poster__art {
+  display: block;
+  height: 100%;
+  width: auto;
+  opacity: var(--o-hold);
+  transition: opacity 0.22s ease;
+}
+
+/* The word only appears over the poster it belongs to, on the poster's own
+   ground rather than the page's — this is art with its own colour under it,
+   so the label brings the projection black with it. */
+.poster__view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cream);
+  background: rgba(6, 6, 3, 0.42);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.poster:hover .poster__art,
+.poster:focus-visible .poster__art { opacity: 1; }
+.poster:hover .poster__view,
+.poster:focus-visible .poster__view { opacity: 1; }
+.poster:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
+
+/* --- key art at size --------------------------------------------------
+   Over everything, on the projection black in both modes: a poster is
+   artwork with its own ground, and the contact sheet's paper is not it. */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(20px, 5vw, 64px);
+  background: rgba(6, 6, 3, 0.94);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.lightbox.is-open { opacity: 1; }
+
+/* display:flex above outranks the UA's [hidden] rule, the same way the
+   credit columns do. */
+.lightbox[hidden] { display: none; }
+
+.lightbox__frame {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-height: 100%;
+}
+
+.lightbox__art {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - clamp(96px, 14vw, 180px));
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  cursor: default;
+}
+
+.lightbox__frame figcaption { color: var(--cream); }
+
+.lightbox__close {
+  all: unset;
+  cursor: pointer;
+  position: absolute;
+  top: clamp(16px, 2.4vw, 28px);
+  right: clamp(16px, 2.4vw, 28px);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cream);
+  opacity: var(--o-hold);
+  transition: opacity 0.18s ease;
+}
+
+.lightbox__close:hover { opacity: 1; }
+.lightbox__close:focus-visible { outline: 1px solid var(--cream); outline-offset: 4px; }
+
 .filmnav {
   display: flex;
   justify-content: space-between;
@@ -1479,6 +1659,24 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   padding-top: 28px;
   border-top: var(--hair);
 }
+
+/* A frame on each way out. It sits above the label rather than beside it,
+   so the two links stay the mirrored pair they already were. */
+.filmnav__art {
+  display: block;
+  width: clamp(96px, 12vw, 160px);
+  /* One rectangle for both ways out, because these two read as a pair.
+     A poster fills it near enough; a catalogue still is centre-cropped
+     into it, which at this size is a frame rather than a crop. */
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--black);
+  opacity: var(--o-nav);
+  transition: opacity 0.18s ease;
+}
+
+.filmnav__art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.filmnav a:hover .filmnav__art { opacity: 1; }
 
 .filmnav a { display: flex; flex-direction: column; gap: 8px; max-width: 46%; opacity: var(--o-nav); transition: opacity 0.18s ease; }
 .filmnav a:hover { opacity: 1; }
