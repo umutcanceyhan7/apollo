@@ -1,8 +1,9 @@
 /* Apollo Films — catalogue data.
    Every entry is scraped from apollofilms.co: title, category and still are real.
    `client` is split out of the original title so the card can show the film big
-   and the client small (see README). No years are invented — add a `year` field
-   to any entry and the UI will render it.
+   and the client small (see README). Years come from the studio, never from a
+   guess: a film without a confirmed shoot year carries no `year` field and
+   prints no date rather than an invented one.
 
    Only the films we hold a delivered credit roll for carry crew and cast
    (see CREDITS below). The rest carry none — a film with no roll prints no
@@ -222,8 +223,9 @@ POSTERS['drole-de-monsieur-ii-leone-dining'] = POSTERS['drole-de-monsieur-ii-leo
 window.APOLLO_FILMS = [
   {
     slug: 'drole-de-monsieur-ii-leone-dining',
-    title: 'Il Leone — Dining',
+    title: 'Il Leone II',
     client: 'Drôle De Monsieur',
+    year: 2026,
     category: 'Brand Works',
     still: CDN + '/73f6e5ec-99b2-44a7-8c2b-08fe4522f5d3/Drole_de_Monsieur_-_Il_Leone_1172805251thumbnail.jpg',
     video: REEL.leoneDining
@@ -232,14 +234,16 @@ window.APOLLO_FILMS = [
     slug: 'drole-de-monsieur-ii-leone',
     title: 'Il Leone',
     client: 'Drôle De Monsieur',
+    year: 2026,
     category: 'Brand Works',
     still: CDN + '/38883601-0a00-4dd8-af6a-9ca925fb3d8d/Drole_de_Monsieur_-_Il_Leone_1168554475thumbnail.jpg',
     video: REEL.leone
   },
   {
     slug: 'xo-cape-arnna',
-    title: 'Cape Arnna',
-    client: 'XO',
+    title: 'A New Way of Feeling Alive',
+    client: 'XO Cape Arnna',
+    year: 2026,
     category: 'Brand Works',
     still: CDN + '/420f5b0f-2b63-405a-9d02-2730bd95776d/XO_Cape_Arnna_1168563603thumbnail.jpg',
     video: REEL.cape
@@ -248,6 +252,7 @@ window.APOLLO_FILMS = [
     slug: 'siedres-x-rafael-indiana-summer-lovers',
     title: 'Summer Lovers',
     client: 'Siedres × Rafael Indiana',
+    year: 2025,
     category: 'Short Films',
     still: CDN + '/dac8740d-b75f-4638-a666-e699034a3fec/Siedres_x_Rafael_Indiana_-_Summer_Lovers_1133567941thumbnail.jpg',
     video: REEL.summerLovers
@@ -255,7 +260,8 @@ window.APOLLO_FILMS = [
   {
     slug: 'shopigo-a-summer-odyssey',
     title: 'A Summer Odyssey',
-    client: 'Shopigo',
+    client: 'Diablo34 × Shopi Go',
+    year: 2021,
     category: 'Brand Works',
     still: CDN + '/4c5eb1a1-e1cb-469e-9e82-b8a0a857798c/Shopigo_-_A_Summer_Odyssey_1122019034thumbnail.jpg',
     video: REEL.odyssey
@@ -264,6 +270,7 @@ window.APOLLO_FILMS = [
     slug: 'drykorn-midnight-in-vienna',
     title: 'Midnight in Vienna',
     client: 'Drykorn',
+    year: 2025,
     category: 'Brand Works',
     still: CDN + '/2e4a696b-9a01-462a-ba1b-5a5424469848/Drykorn_-_Midnight_in_Vienna_1133435923thumbnail.jpg',
     video: REEL.vienna
@@ -271,7 +278,8 @@ window.APOLLO_FILMS = [
   {
     slug: '3ckc59fzd7gx74wxljygglmg8ga5kh',
     title: 'Constanze in Istanbul',
-    client: 'Apollo Films',
+    client: 'Rafael Indiana',
+    year: 2025,
     category: 'Short Films',
     still: CDN + '/76fb7bfe-c450-45dc-81d4-747a14a29a34/Constanze_in_Istanbul_1122031299thumbnail.jpg',
     video: REEL.constanze,
@@ -282,6 +290,7 @@ window.APOLLO_FILMS = [
     slug: 'raisavanessa2',
     title: 'La Casa De Raisa Vanessa',
     client: 'Raisa Vanessa',
+    year: 2022,
     category: 'Short Films',
     still: CDN + '/79cc464e-124d-4273-8f0f-e5a682abe575/La_Casa_De_Raisa_Vanessa_1133585588thumbnail.jpg',
     hero: CDN + '/eae7bf91-d0b0-471a-b153-ae761f860172/LA+CASA+DE+RAISA+VANESSA.JPG',
@@ -294,6 +303,7 @@ window.APOLLO_FILMS = [
     slug: 'amoreserpente2',
     title: 'Amore Serpente',
     client: 'Raisa Vanessa',
+    year: 2022,
     category: 'Short Films',
     still: CDN + '/6ab2f744-4c48-475b-9119-d50f8f376e33/Raisa_Vanessa_-_Amore_Serpente_1122243071thumbnail.jpg',
     video: REEL.serpente
@@ -302,6 +312,7 @@ window.APOLLO_FILMS = [
     slug: 'raisavanessa',
     title: 'La Casa De Raisa Vanessa',
     client: 'Raisa Vanessa',
+    year: 2022,
     category: 'Trailers',
     still: CDN + '/22edfda1-e70e-4956-9498-fd15f93c8d63/La_Casa_De_Raisa_Vanessa_Teaser_1122244675thumbnail.jpg',
     video: REEL.laCasaTr,
@@ -311,48 +322,54 @@ window.APOLLO_FILMS = [
   },
   {
     slug: 'amoreserpente',
-    title: 'Raisa Vanessa Amore Serpente',
+    title: 'Amore Serpente',
     client: 'Raisa Vanessa',
+    year: 2022,
     category: 'Trailers',
     still: CDN + '/21e85106-5b58-47f7-a56e-bc240bae2a8f/Raisa_Vanessa_-_Amore_Serpente_Trailer_1122246053thumbnail.jpg',
     video: REEL.serpenteTr
   },
   {
     slug: 'drole1',
-    title: 'Drôle De Monsieur',
-    client: 'Drôle De Monsieur · Film I',
+    title: 'Mongiardino',
+    client: 'Drôle De Monsieur',
+    year: 2024,
     category: 'Brand Works',
     still: CDN + '/5d4e183a-f1a0-4bf9-b7d2-b59266a9ba1c/Drole_de_Monsieur_1122032670thumbnail.jpg',
     video: REEL.drole1
   },
   {
     slug: 'drole2',
-    title: 'Drôle De Monsieur',
-    client: 'Drôle De Monsieur · Film II',
+    title: 'The Boat Shoe',
+    client: 'Drôle De Monsieur',
+    year: 2024,
     category: 'Brand Works',
     still: CDN + '/b1281d76-a627-44fa-a997-bb81302c4731/Drole_de_Monsieur_1122032834thumbnail.jpg',
     video: REEL.drole2
   },
   {
     slug: 'drole3',
-    title: 'Drôle De Monsieur',
-    client: 'Drôle De Monsieur · Film III',
+    title: 'Le Tracksuit',
+    client: 'Drôle De Monsieur',
+    year: 2024,
     category: 'Brand Works',
     still: CDN + '/a2db7707-a3c5-4390-b9b0-f212893af9b2/Drole_de_Monsieur_1122223333thumbnail.jpg',
     video: REEL.drole3
   },
   {
     slug: 'drole4',
-    title: 'Drôle De Monsieur',
-    client: 'Drôle De Monsieur · Film IV',
+    title: 'Not From Paris Madame',
+    client: 'Drôle De Monsieur',
+    year: 2024,
     category: 'Brand Works',
     still: CDN + '/b3f398b3-b28e-4d14-9466-dce4911af57a/Drole_de_Monsieur_1122032199thumbnail.jpg',
     video: REEL.drole4
   },
   {
     slug: 'dagi',
-    title: 'DAGI',
+    title: 'DAGI Islands',
     client: 'DAGI × Birce Akalay',
+    year: 2023,
     category: 'Brand Works',
     still: CDN + '/b9abafb1-a9bb-48b5-ad4c-6b02701ff2fd/Dagi_Islands_1122031538thumbnail.jpg',
     video: REEL.dagi
@@ -360,7 +377,8 @@ window.APOLLO_FILMS = [
   {
     slug: 'clubmarvy',
     title: 'Club Marvy',
-    client: '',
+    client: 'Club Marvy',
+    year: 2024,
     category: 'Brand Works',
     still: CDN + '/afa89f80-dcb6-406f-8991-5bc6cfc5fe4e/Club_Marvy_1122249863thumbnail.jpg',
     video: REEL.clubMarvy
@@ -369,22 +387,25 @@ window.APOLLO_FILMS = [
     slug: 'aureasomnia',
     title: 'Aurea Somnia',
     client: 'Rafael Indiana',
+    year: 2022,
     category: 'Short Films',
     still: CDN + '/10dc07c7-18d9-49a0-897e-64ded62dfb4f/Rafael_Indiana_-_Aurea_Somnia_1122027880thumbnail.jpg',
     video: REEL.aurea
   },
   {
     slug: 'jack-daniels',
-    title: 'Jack Lives Here',
-    client: "Jack Daniel's",
+    title: 'Original Times',
+    client: 'Jack Lives Here × Birce Akalay',
+    year: 2023,
     category: 'Brand Works',
     still: CDN + '/3e098186-f41b-4676-b077-a420e02648fc/Jack_Daniels_-_Jack_Lives_Here_1122242261thumbnail.jpg',
     video: REEL.jack
   },
   {
     slug: 'leija',
-    title: 'Leija',
-    client: 'Bosphorus Gentlemen',
+    title: 'Bosphorus Gentlemen',
+    client: 'Leiija',
+    year: 2022,
     category: 'Brand Works',
     still: CDN + '/30fb9bc4-4a00-405b-818c-fb469936ea2a/Leija_1122247732thumbnail.jpg',
     video: REEL.leija
@@ -393,6 +414,7 @@ window.APOLLO_FILMS = [
     slug: 'atelierindiana',
     title: 'Atelier Indiana',
     client: 'Rafael Indiana',
+    year: 2024,
     category: 'Short Films',
     still: CDN + '/4174783f-e53a-44b4-acb6-d96c0af3c34c/Rafael_Indiana_-_Atelier_1122255907thumbnail.jpg',
     video: REEL.atelier
@@ -400,7 +422,8 @@ window.APOLLO_FILMS = [
   {
     slug: 'koton',
     title: 'Blue Voyage',
-    client: 'Koton × Ece Sükan',
+    client: 'Koton',
+    year: 2022,
     category: 'Brand Works',
     still: CDN + '/edf58b18-c8ca-4a9b-8678-9e71a3161098/Koton_-_Blue_Voyage_1122028784thumbnail.jpg',
     video: REEL.koton
@@ -409,6 +432,7 @@ window.APOLLO_FILMS = [
     slug: 'mirage',
     title: 'Mirage',
     client: 'Rafael Indiana',
+    year: 2022,
     category: 'Short Films',
     still: CDN + '/49d37e32-a5b1-47d7-b0eb-0abf08c91c8c/Rafael_Indiana_-_Mirage_1122250311thumbnail.jpg',
     hero: CDN + '/852bf839-2cc7-4931-9e8f-b0990d574fe3/MIRAGE+2.JPG',
@@ -420,6 +444,7 @@ window.APOLLO_FILMS = [
     slug: 'penti',
     title: 'Penti Beach',
     client: 'Penti',
+    year: 2024,
     category: 'Brand Works',
     still: CDN + '/7e94018b-a14e-4156-847f-3dc3c5995b38/Penti_Beach_1122255031thumbnail.jpg',
     video: REEL.penti

@@ -557,6 +557,17 @@ p { margin: 0; max-width: 58ch; }
   flex-wrap: wrap;
 }
 
+/* --- the year ----------------------------------------------------------
+   A date is a fact about a film, so it is set as a figure everywhere it
+   appears: tabular numerals, held a step quieter than the name it follows.
+
+   The film page sets it on its own line under the client, where it reads as
+   the last line of the title block rather than a suffix to the brand. */
+.year {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.14em;
+}
+
 .index { position: relative; list-style: none; margin: 0; padding: 0; }
 .index li { margin: 0; }
 
@@ -571,9 +582,15 @@ p { margin: 0; max-width: 58ch; }
   transition: opacity 0.18s ease;
 }
 
+/* Four figures where there used to be two. Tabular numerals so the dates
+   sit at one width behind titles of five different lengths. No dimming of
+   its own: the link already carries the rank of the row it belongs to, and
+   a second veil on top of that leaves the date unreadable over a lit frame.
+   12px against 68px is rank enough. */
 .index a sup {
   font-size: 12px;
   letter-spacing: 0.16em;
+  font-variant-numeric: tabular-nums;
   transform: translateY(0.9em);
   white-space: nowrap;
 }
@@ -1075,21 +1092,18 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 
 .row {
   display: grid;
-  grid-template-columns: minmax(84px, 12vw) minmax(0, 1fr) minmax(0, 22ch) 14ch;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 26ch) 13ch;
   align-items: baseline;
   gap: 0 24px;
-  padding: 18px 0 22px;
+  /* The rank numeral used to set this height — 84px of figure against a
+     42px title. Without it the row would close to the height of its own
+     type and the list would read as a dense table, so the space the
+     numeral held is given back as air instead. */
+  padding: 30px 0 34px;
   opacity: var(--o-rest);
   transition: opacity 0.2s ease;
 }
 .row:hover, .row:focus-visible, li.is-active > .row { opacity: 1; }
-
-.row__n {
-  font-size: clamp(32px, 5.4vw, 84px);
-  line-height: 0.8;
-  letter-spacing: var(--tight-lg);
-  font-variant-numeric: tabular-nums;
-}
 
 .row__t {
   font-size: clamp(22px, 2.8vw, 42px);
@@ -1097,12 +1111,28 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   letter-spacing: var(--tight-lg);
 }
 
-.row__c, .row__k {
+.row__c, .row__k, .row__y {
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 .row__k { text-align: right; }
+
+/* Each half of a joined client name (see clientCell in app.js). The cell
+   wraps between these, never inside one. */
+.row__c > span { white-space: nowrap; }
+
+/* The year is a figure, not a word: tabular numerals so the column reads as
+   a column, and a shade quieter than the client so the eye lands on the
+   name first. The column is sized `auto` — four figures wide and not a pixel
+   more, so it sits against the client rather than floating in slack. It is
+   the one cell that survives every width: a date costs four characters, and
+   a filmography without dates is a mood board. */
+.row__y {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+}
 
 /* --- filters ---------------------------------------------------- */
 
@@ -1822,7 +1852,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 /* --- responsive --------------------------------------------------------- */
 
 @media (max-width: 1100px) {
-  .row { grid-template-columns: minmax(64px, 14vw) minmax(0, 1fr) 12ch; }
+  .row { grid-template-columns: minmax(0, 1fr) auto 12ch; }
   .row__c { display: none; }
 }
 
@@ -1858,7 +1888,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 
   .columns { grid-template-columns: 1fr; gap: 16px; }
 
-  .row { grid-template-columns: minmax(52px, 18vw) minmax(0, 1fr); gap: 0 16px; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; gap: 0 16px; padding: 22px 0 26px; }
   .row__k { display: none; }
 
   .catalogue { min-height: 54svh; }

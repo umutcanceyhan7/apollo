@@ -198,7 +198,12 @@
       var a = el('a');
       a.href = 'film.html?f=' + encodeURIComponent(slug);
       a.appendChild(document.createTextNode(film.title));
-      a.appendChild(el('sup', null, String(i + 1).padStart(2, '0')));
+      /* The mark after the title is the year, not a position in the list.
+         Five films ranked 01 to 05 imply an order the reel doesn't have —
+         it cycles, and any of them can be first. A date says something
+         true about the film instead. A film without a confirmed year
+         carries no mark rather than a placeholder. */
+      if (film.year) a.appendChild(el('sup', null, String(film.year)));
       li.appendChild(a);
       index.appendChild(li);
 
@@ -367,6 +372,29 @@
        decoded films because the reader scrolled past them, so only the last
        few keep their buffer; the files stay in the HTTP cache. */
     var live = [];
+    /* A client string joins two names — a brand and its campaign, or two
+       collaborators. The longest of them outrun the column, and left to
+       itself the browser breaks wherever the line runs out, tearing a name
+       in half. Each name is held together instead and the break is put at
+       the join it was already written around, so a two-line cell reads as
+       two things rather than one thing snapped. */
+    function clientCell(text) {
+      if (!text) return el('span', 'row__c', '—');
+      var cell = el('span', 'row__c');
+      var parts = [];
+      var run = '';
+      text.split(' ').forEach(function (word) {
+        run += (run ? ' ' : '') + word;
+        if (word === '·' || word === '×') { parts.push(run); run = ''; }
+      });
+      if (run) parts.push(run);
+      parts.forEach(function (part, n) {
+        if (n) cell.appendChild(document.createTextNode(' '));
+        cell.appendChild(el('span', null, part));
+      });
+      return cell;
+    }
+
     /* Set by the focus engine below, called by the filter. */
     var recommit = function () {};
 
@@ -390,10 +418,13 @@
       var li = el('li');
       var a = el('a', 'row');
       a.href = 'film.html?f=' + encodeURIComponent(film.slug);
-      a.appendChild(el('span', 'row__n', String(i + 1).padStart(2, '0')));
       var title = el('span', 'row__t', film.title);
       a.appendChild(title);
-      a.appendChild(el('span', 'row__c', film.client || '—'));
+      /* Year holds its own column between the film and the client — the
+         ledger reading a filmography takes. An em dash stands where the
+         year hasn't been confirmed, matching the client cell's own. */
+      a.appendChild(el('span', 'row__y', film.year ? String(film.year) : '—'));
+      a.appendChild(clientCell(film.client));
       a.appendChild(el('span', 'row__k', film.category));
 
       /* The cue rides inside the title cell rather than as a fifth grid child:
@@ -653,6 +684,8 @@
       detail.querySelector('[data-title]').textContent = 'Film not found';
       detail.querySelector('[data-cat]').textContent = 'Apollo Films';
       detail.querySelector('[data-client]').textContent = '';
+      var noMade = detail.querySelector('[data-made]');
+      if (noMade) noMade.hidden = true;
       /* No film, no stage: the sound button would otherwise be left sitting
          over an empty black rectangle with nothing to unmute. */
       var deadStage = detail.querySelector('.filmstage');
@@ -663,6 +696,11 @@
       detail.querySelector('[data-title]').textContent = film.title;
       detail.querySelector('[data-cat]').textContent = film.category;
       detail.querySelector('[data-client]').textContent = film.client || '';
+      var made = detail.querySelector('[data-made]');
+      if (made) {
+        if (film.year) made.textContent = String(film.year);
+        else made.hidden = true;
+      }
 
       player.poster = film.hero || film.still;
       /* The full cut when a media host is configured, the 12s loop when it

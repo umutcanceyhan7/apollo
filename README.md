@@ -518,8 +518,10 @@ section appears; delete a role line and the list reflows.
 }
 ```
 
-Add `year: '2024'` to any entry and it renders after the client automatically. No years
-are in there now because the live site doesn't publish them — I didn't want to invent any.
+Add `year: 2024` to any entry and it renders everywhere the film appears: after the
+client in the homepage hero, as its own column in the showcase ledger, and under the
+client on the film page. Entries without a confirmed shoot year carry no `year` and
+print an em dash in the ledger rather than an invented date.
 
 `window.APOLLO_INDEX` picks the five titles on the homepage, in order.
 
@@ -527,9 +529,10 @@ are in there now because the live site doesn't publish them — I didn't want to
 
 - **Stills are still hotlinked** from the Squarespace CDN — they serve as video posters
   everywhere. Download them into `assets/img/` before going to production.
-- **The four untitled Drôle De Monsieur films** are all called "Drole De Monsieur" on the
-  live site, so I labelled them Film I–IV in the client line to tell them apart. Rename
-  them in `films.js`.
+- **The four Drôle De Monsieur films** are all called "Drole De Monsieur" on the live
+  site. Their real titles — Mongiardino, The Boat Shoe, Le Tracksuit, Not From Paris
+  Madame — came from the studio and are set in `films.js`. The campaign they belong to
+  is not printed: the year carries the date, and the client line carries the brand.
 - **The contact form opens a mail client.** Point it at Formspree, Basin, or your own
   endpoint for real submissions.
 - **Space Grotesk is 601's own stated substitute** for changeling-neo. Swap the
