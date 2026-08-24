@@ -1897,8 +1897,15 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 
   .credits li { grid-template-columns: 1fr; gap: 4px; }
 
-  .filmnav { flex-direction: column; gap: 28px; }
-  .filmnav a, .filmnav a:last-child { max-width: 100%; text-align: left; align-items: flex-start; }
+  /* Previous and next are a mirrored pair, one on each edge pointing away
+     from the other. Stacked they stop being a pair and read as two more
+     rows of the page, and the way back and the way on look like the same
+     move. They stay side by side on a phone; the type comes down a step to
+     fit two of them across, and the gap narrows so each half keeps enough
+     measure for a title to break on a word rather than a syllable. */
+  .filmnav { gap: 16px; }
+  .filmnav a { max-width: calc(50% - 8px); }
+  .filmnav .t { font-size: 17px; letter-spacing: var(--tight-sm); line-height: 1.05; }
 
   /* The filters are a bullet-separated run on a desktop, the same pattern the
      nav uses. On a phone that run wraps into ragged half-lines, so it becomes
