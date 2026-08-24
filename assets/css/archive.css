@@ -60,9 +60,21 @@
 
 .archive.is-dragging { cursor: grabbing; }
 
+/* The wall's origin is the MIDDLE of the screen, not its corner. Every
+   coordinate the engine holds — a frame's x and y, the camera, the clamp,
+   the rectangles in the map — is measured from the centre of the wall and
+   runs to ±W/2, and the camera only travels ±(W-vw)/2. Anchored at the
+   corner instead, the whole wall sits half a viewport off from where the
+   engine believes it is: frames are culled while they are still on screen,
+   the far corner reads as a void because the camera can no longer reach the
+   end of the wall, and nothing on the outer half can be brought to the
+   middle at all. Half a screen, everywhere. */
 .field {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
   outline: none;
   /* The only promoted layer on the page. One composited surface carrying
      forty-one frames costs a rounding error; forty-one promoted frames is a
@@ -144,6 +156,19 @@
    reads the way travelling through it does. */
 .frame.is-in.is-near,
 .frame.is-in:focus-within { opacity: 1; }
+
+/* --- held by the middle of the screen ------------------------------------
+   The engine grows whatever the camera has settled on — a photograph by a
+   tenth, a cut to most of the screen. The scale itself is written in the
+   loop with everything else; what CSS owns is only what the rest of the wall
+   does about it. A cut at eighty percent standing in a full wall is a
+   collage, so the wall stands back for as long as one is up, on the opacity
+   transition the frame already has.
+
+   `will-change` is scoped to the one frame that is actually growing. Only
+   `.field` is promoted for the whole visit, and that stays true. */
+.frame.is-focus { opacity: 1; will-change: transform; }
+.archive.is-focusing .frame.is-in:not(.is-focus) { opacity: 0.5; }
 .frame.is-near img,
 .frame.is-near video,
 .frame:focus-within img,
@@ -206,6 +231,12 @@
 
 .slate__run { opacity: var(--o-rest); }
 
+/* A cut held by the middle of the screen is most of the screen, and its
+   slate ends up sitting on the footer. It is also the one frame the corner
+   is naming by then, so the slate has nothing left to say. */
+.slate { transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1); }
+.frame--cut.is-focus .slate { opacity: 0; }
+
 /* --- the map ------------------------------------------------------------
    The whole wall at a glance, and the one element on the page whose job is
    to say that the archive is FINITE. It is a rectangle with a hairline
@@ -262,13 +293,38 @@
   inset: 0;
   pointer-events: none;
   background:
+    /* Four pools, one under each corner mark. The bands below carry the
+       whole width and so cannot be deepened without dimming the footage
+       across it; a mark sits in a corner and needs the ground only there.
+       Each pool is sized to the mark it carries — the bottom pair wider,
+       because the nav and the map are rows rather than points — and every
+       one of them has fallen to nothing before it reaches the middle. */
+    radial-gradient(340px 240px at 0% 0%, rgba(var(--ground-rgb), 0.86) 0%,
+                    rgba(var(--ground-rgb), 0.6) 34%,
+                    rgba(var(--ground-rgb), 0) 78%),
+    radial-gradient(300px 190px at 100% 0%, rgba(var(--ground-rgb), 0.8) 0%,
+                    rgba(var(--ground-rgb), 0.52) 34%,
+                    rgba(var(--ground-rgb), 0) 78%),
+    radial-gradient(640px 240px at 0% 100%, rgba(var(--ground-rgb), 0.86) 0%,
+                    rgba(var(--ground-rgb), 0.6) 44%,
+                    rgba(var(--ground-rgb), 0) 84%),
+    radial-gradient(480px 300px at 100% 100%, rgba(var(--ground-rgb), 0.82) 0%,
+                    rgba(var(--ground-rgb), 0.54) 38%,
+                    rgba(var(--ground-rgb), 0) 80%),
     /* The two rules the corner marks sit on. A photograph travelling under
        the interface is the normal case here, not the exception, and an 11px
-       mark at a third opacity disappears entirely over a bright one. */
-    linear-gradient(to bottom, rgba(var(--ground-rgb), 0.66) 0%,
-                    rgba(var(--ground-rgb), 0) 11%),
-    linear-gradient(to top, rgba(var(--ground-rgb), 0.7) 0%,
-                    rgba(var(--ground-rgb), 0) 13%),
+       mark at a third opacity disappears entirely over a bright one.
+
+       Three stops rather than two: a straight ramp spends most of its length
+       on the half of the falloff no mark occupies, and leaves the marks
+       themselves standing in about a third of a ground. This holds through
+       the band the marks are in and then goes quickly. */
+    linear-gradient(to bottom, rgba(var(--ground-rgb), 0.78) 0%,
+                    rgba(var(--ground-rgb), 0.45) 7%,
+                    rgba(var(--ground-rgb), 0) 16%),
+    linear-gradient(to top, rgba(var(--ground-rgb), 0.82) 0%,
+                    rgba(var(--ground-rgb), 0.48) 7%,
+                    rgba(var(--ground-rgb), 0) 16%),
     radial-gradient(132% 112% at 50% 50%, rgba(var(--ground-rgb), 0) 52%,
                     rgba(var(--ground-rgb), 0.62) 100%);
 }
@@ -317,14 +373,19 @@ a.hud:focus-visible, .hud a:focus-visible { outline: 1px solid currentColor; out
 
    The corner sits at clamp(18px, 2.4vw, 30px) with nothing to push against,
    so this height is free of the masthead's bar arithmetic and is set purely
-   to read at a glance across a dark field. */
+   to read at a glance across a dark field.
+
+   The file is square, so the box is square too: a 122x52 box with a
+   contained square mask paints an 80px-wide mark at 52px and then reserves
+   42px of nothing to its right — the mark came out barely half the size of
+   the one in the masthead, on the page that has the most room for it. */
 .hud--brand {
   display: block;
-  width: 122px;
-  height: 52px;
+  width: clamp(58px, 6.3vw, 80px);
+  height: clamp(58px, 6.3vw, 80px);
   background: currentColor;
-  -webkit-mask: url(../Apollo+Beyaz+Logo.webp) no-repeat left center;
-  mask: url(../Apollo+Beyaz+Logo.webp) no-repeat left center;
+  -webkit-mask: url(../logoApollo.png) no-repeat left center;
+  mask: url(../logoApollo.png) no-repeat left center;
   -webkit-mask-size: contain;
   mask-size: contain;
 }
@@ -337,8 +398,25 @@ a.hud:focus-visible, .hud a:focus-visible { outline: 1px solid currentColor; out
   }
 }
 
-.hud--bl { display: flex; align-items: baseline; gap: 1.6em; }
-.hud__nav { display: flex; gap: 1.4em; opacity: var(--o-rest); }
+/* Bottom left carries two different things and used to say them at one
+   volume: where you are, then where else you can go. It also nested one
+   opacity inside another — 0.62 on the row, 0.5 on the nav — and 0.31 ink
+   is not a nav item on a field of photographs, it is a rumour of one. The
+   row now runs at full strength and each part states its own.
+
+   The links take the site's separator too. Every other nav on the site is
+   bulleted; three words in a row with nothing between them read here as one
+   four-word string rather than as three places to go. */
+.hud--bl { display: flex; align-items: baseline; gap: 1.7em; opacity: 1; }
+.hud__here { opacity: var(--o-hold); }
+.hud__nav { display: flex; align-items: baseline; }
+.hud__nav a { opacity: var(--o-dim); }
+.hud__nav a:not(:last-child) { margin-right: 1.15em; }
+.hud__nav a:not(:last-child)::after {
+  content: "\2022";
+  margin-left: 1.15em;
+  opacity: var(--o-quiet);
+}
 
 /* Bottom right names whatever the camera is nearest. In a field there is no
    position to report as a fraction — a hairline filling up says nothing
@@ -472,6 +550,16 @@ a.hud:focus-visible, .hud a:focus-visible { outline: 1px solid currentColor; out
   object-fit: cover;
 }
 
+/* The cut plays itself, silent and looping. Nothing to scrub, nothing to
+   press — iOS still tries to paint a control layer on an inline video. */
+.viewer__stage video::-webkit-media-controls,
+.viewer__stage video::-webkit-media-controls-enclosure,
+.viewer__stage video::-webkit-media-controls-panel,
+.viewer__stage video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
 .viewer__btn {
   position: absolute;
   z-index: 2;
@@ -519,7 +607,7 @@ a.hud:focus-visible, .hud a:focus-visible { outline: 1px solid currentColor; out
 @media (max-width: 700px) {
   .viewer__btn--prev, .viewer__btn--next { display: none; }
   .hud--bl, .hud--br, .hud--tl, .hud--tr { font-size: 10px; letter-spacing: 0.16em; }
-  .hud--brand { width: 88px; height: 38px; }
+  .hud--brand { width: 54px; height: 54px; }
   /* The bottom row is where the label, the nav and the name all want to be,
      and on a phone they meet in the middle. The nav steps up a line so the
      bottom rule stays one mark at each end. */
@@ -528,7 +616,9 @@ a.hud:focus-visible, .hud a:focus-visible { outline: 1px solid currentColor; out
     gap: 0.9em;
     justify-items: start;
   }
-  .hud__nav { gap: 1.2em; order: -1; }
+  .hud__nav { order: -1; }
+  .hud__nav a:not(:last-child) { margin-right: 0.9em; }
+  .hud__nav a:not(:last-child)::after { margin-left: 0.9em; }
 }
 
 /* --- reduced motion ------------------------------------------------------

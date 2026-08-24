@@ -29,8 +29,8 @@
     <button class="masthead__toggle" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
     <nav class="masthead__nav" id="nav">
       <a href="showcase.html">Showcase</a>
-      <a href="backstage.html">Backstage</a>
       <a href="about.html" aria-current="page">About</a>
+      <a href="backstage.html">Backstage</a>
       <a href="contact.html">Contact</a>
     </nav>
     <!-- Half the disc inked, half left as hairline: the two grounds, shown
@@ -68,46 +68,105 @@
     <span class="label dim wall__scroll" aria-hidden="true">Scroll</span>
   </section>
 
-  <section class="band band--dark">
-    <div class="midblock" data-reveal>
-      <p class="label dim">The studio</p>
-      <div class="prose">
-        <p>Apollo Films is the studio of Rafael Cemo &Ccedil;etin, an independent director working
-          out of Istanbul.</p>
-        <p>We produce brand films, fashion work, campaigns, and short films. From initial concept
-          to final cut.</p>
-        <p>Berlin, New York, Istanbul: three cities behind one way of seeing. That is the
-          culture we work in, and what we bring to the work.</p>
+  <!-- The studio, and the man who runs it, as one spread.
+
+       The page used to say this in two places: the prose on its own band
+       with 733px of nothing beside it, and the pictures a band below with
+       508px of nothing beside them. Two half-empty bands saying one thing.
+       The sheet keeps the composition it had — a wide establishing frame
+       over two portraits, the name set on the small frame's own top line —
+       and the prose moves into the air to its right, which is the space
+       that was empty in the first place.
+
+       The ground is the page's own black. A cream band here would be the
+       largest colour on a page whose whole argument is that the footage is
+       the only chroma there is; the one cream that remains is the call at
+       the foot of the page, where a single mark can carry it. -->
+  <section class="band band--dark band--spread">
+    <div class="spread">
+
+      <figure class="sheet" data-reveal>
+        <span class="sheet__frame sheet__frame--wide">
+          <img class="sheet__img" src="assets/backstage/web/cemo-04-view.webp"
+               width="1600" height="1200" loading="lazy" decoding="async"
+               alt="Rafael Cemo &Ccedil;etin on a boat at golden hour, a megaphone on his shoulder, the camera crew working at the monitor behind him.">
+        </span>
+        <span class="sheet__frame sheet__frame--lead">
+          <img class="sheet__img" src="assets/about_us_cemo.jpg"
+               width="800" height="1000" loading="lazy" decoding="async"
+               alt="Rafael Cemo &Ccedil;etin behind a plaster bust of Apollo, wearing his own gold chains and rings.">
+        </span>
+        <span class="sheet__frame sheet__frame--aside">
+          <img class="sheet__img" src="assets/about_us_cemo_2.jpeg"
+               width="803" height="1200" loading="lazy" decoding="async"
+               alt="Rafael Cemo &Ccedil;etin in a tan jacket on a city street, raising a film camera to his eye.">
+        </span>
+        <figcaption class="sheet__caption">
+          <h2 class="h2">Rafael Cemo &Ccedil;etin</h2>
+          <!-- The door. The line around it is dimmed metadata and the word
+               is not, so the sentence itself shows where it goes without a
+               second line of link text under it. -->
+          <span class="label sheet__role">Director and <a class="sheet__tie"
+              href="https://rafaelindiana.com" target="_blank" rel="noopener"
+              aria-label="Rafael Indiana, Rafael's jewellery line (opens in a new tab)"
+              ><span class="sheet__word">jewellery</span></a> designer</span>
+        </figcaption>
+      </figure>
+
+      <!-- Pinned, because the prose is a third of the sheet's height and a
+           column that simply started beside it would strand two thirds of
+           its own track. Held at the masthead's line it reads the whole way
+           down the pictures instead, which is the same device the film
+           page's credits already use. -->
+      <div class="spread__aside">
+        <h1 class="label dim" data-reveal>The studio</h1>
+        <div class="spread__prose" data-reveal="120">
+          <p>Apollo Films is an independent film studio founded in 2022 by Rafael Cemo &Ccedil;etin, a director and jewellery designer working out of Istanbul.</p>
+          <p>We produce brand films, fashion work, campaigns, and short films. From initial concept to final cut.</p>
+          <p>Inspired by Apollo, the Greek god of light and order, the studio moves with intent. Our work is warm, but not sentimental. Emotional, but not performative. We value atmosphere, coherence and storytelling that travels across formats, cultures and time.</p>
+        </div>
       </div>
+
     </div>
   </section>
 
-  <!-- The close. It sits in `main` rather than in the footer because it is a
-       section of the page and not its fine print. The band above it is the
-       same black and the footer under it draws no rule, so the page runs out
-       rather than cutting: the four facts are the last thing on it, carried
-       by nothing but their own labels. -->
-  <section class="band band--dark band--tight band--close">
-    <div class="midblock" data-reveal>
-      <ul class="factgrid">
-        <li>
-          <span class="label dim">Founder</span>
-          <span class="h3">Rafael Cemo &Ccedil;etin</span>
-        </li>
-        <li>
-          <span class="label dim">Based</span>
-          <span class="h3">Istanbul, Turkey</span>
-        </li>
-        <li>
-          <span class="label dim">Enquiries</span>
-          <a class="h3" href="mailto:info@apollofilms.co">info@apollofilms.co</a>
-        </li>
-        <li>
-          <span class="label dim">Instagram</span>
-          <a class="h3" href="https://www.instagram.com/apollofilmsco/"
-             target="_blank" rel="noopener">@apollofilmsco</a>
-        </li>
-      </ul>
+  <!-- The facts sit in `main` rather than in the footer because they are a
+       section of the page and not its fine print. Carried by nothing but
+       their own labels, on the same black as the spread above them, so the
+       band reads as the studio's colophon rather than a second navigation. -->
+  <section class="band band--dark band--tight">
+    <ul class="factgrid" data-reveal>
+      <li>
+        <span class="label dim">Founded</span>
+        <span class="h3">2022</span>
+      </li>
+      <li>
+        <span class="label dim">Based</span>
+        <span class="h3">Istanbul, Turkey</span>
+      </li>
+      <li>
+        <span class="label dim">Enquiries</span>
+        <a class="h3" href="mailto:info@apollofilms.co">info@apollofilms.co</a>
+      </li>
+      <li>
+        <span class="label dim">Instagram</span>
+        <a class="h3" href="https://www.instagram.com/apollofilmsco/"
+           target="_blank" rel="noopener">@apollofilmsco</a>
+      </li>
+    </ul>
+  </section>
+
+  <!-- The closing call, and the page's one cream. Every other page on the
+       site ends on this band — showcase on "Bring us the brief.", contact on
+       "Let's begin.", film on "More work." — and about was the only one that
+       ran its last black band into the footer instead. The line is the
+       studio's own frame rather than a second telling of showcase's: the
+       masthead calls them modern day storytellers, so the brief is what the
+       showcase asks for and the story is what this page does. -->
+  <section class="band band--cream">
+    <div class="stack stack--lg">
+      <h2 class="display" data-split data-reveal>Tell us the story.</h2>
+      <a class="btn" href="contact.html">Contact the studio</a>
     </div>
   </section>
 
@@ -118,7 +177,6 @@
     <nav class="sitefooter__nav" aria-label="Footer">
       <a href="showcase.html">Showcase</a>
       <a href="backstage.html">Backstage</a>
-      <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
     </nav>
     <span class="label">© <span data-year>2026</span> Apollo Films</span>

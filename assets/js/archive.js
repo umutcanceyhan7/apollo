@@ -17,9 +17,13 @@
 
    Almost all motion comes from the visitor. The wall itself is still: a
    frame settles into place the first time the camera brings it properly into
-   view and then stays where it was put, and the only other movement is the
-   small lean a frame gives the cursor. Nothing drifts on its own — this is a
-   wall, not a screensaver.
+   view and then stays where it was put. What moves after that is only ever
+   an answer to where the visitor has put the camera — the small lean a frame
+   gives the cursor, and the middle of the screen taking hold of whatever is
+   in it. A cut brought into the middle grows to most of the screen and lets
+   go again as soon as the camera carries on past it, which is the whole of
+   the gesture on a phone: swipe onto it, swipe off it. Nothing drifts on its
+   own — this is a wall, not a screensaver.
 
    Reads window.APOLLO_BACKSTAGE (assets/js/backstage.js).
    ============================================================ */
@@ -47,8 +51,11 @@
   /* How big the wall is, in screens. Deliberately modest: the whole point is
      that a visitor can hold the entire archive in their head after a minute
      of moving around it. */
-  var WALL_W = 2.5, WALL_H = 2.0;
-  var WALL_W_SMALL = 2.4, WALL_H_SMALL = 2.6;
+  /* Scored a little under the wall that is wanted, because the relaxation
+     runs free and pushes the extent out by a tenth or so before the wall is
+     fitted to it. 2.5 x 1.75 here lands at about 2.5 x 2.0 on screen. */
+  var WALL_W = 2.45, WALL_H = 1.72;
+  var WALL_W_SMALL = 2.6, WALL_H_SMALL = 3.1;
 
   /* The three scales, as the square root of a frame's AREA rather than as a
      width. A portrait frame and a landscape frame given the same width do
@@ -58,8 +65,8 @@
 
      The smallest is set so that even a 2:3 portrait clears 180px across. */
   var TIER = [308, 250, 212];
-  var TIER_SMALL = [188, 152, 126];
-  var CUT_K = 430, CUT_K_SMALL = 220;
+  var TIER_SMALL = [166, 134, 111];
+  var CUT_K = 430, CUT_K_SMALL = 198;
 
   /* Which scale each frame gets, walked in the order they are dealt. Uneven,
      no short cycle, and the large ones spaced so a run of three is never the
@@ -72,6 +79,31 @@
   var MAXV = 46;
   var NEAR = 1.1;   /* screens of camera to fetch a frame at */
 
+  /* The middle of the screen is the second thing a frame answers, and the
+     only one a phone has. The cursor lift above belongs to a mouse and is
+     switched off on touch; this one is driven by the camera itself, so
+     swiping a cut into the middle of a phone is what makes it grow and
+     swiping past it is what puts it back.
+
+     A cut goes much further than a photograph — to CUT_FILL of the screen,
+     which is roughly twice its size on the wall — because the two things
+     that move on this wall should be the two things worth stopping on. A
+     photograph only ever leans. */
+  var FOCUS_R = 0.5;     /* screens of camera travel a frame is felt within */
+  var CUT_FILL = 0.80;   /* how much of the screen a centred cut takes */
+  /* A cut laid out large enough to be past that already — the portrait cut
+     on a desktop is most of the screen's height standing still — would
+     answer the camera by not moving at all, which reads as broken rather
+     than as restraint. So the fill is a floor with a floor of its own: a
+     tenth of the screen more than it had, and never past CUT_MOST, because
+     a cut with no wall left around it is a video player. */
+  var CUT_GROW = 0.10;
+  var CUT_MOST = 0.94;
+  var SHOT_LIFT = 0.10;  /* how much a centred photograph grows */
+  var CUT_BIAS = 0.55;   /* a cut counts as this much nearer than it is */
+  var CUT_PULL = 0.9;    /* how far a growing cut slides to the middle */
+  var FOCUS_EASE = 0.14; /* and how fast it answers a change of mind */
+
   /* Stable pseudo-randomness. The wall has to look composed by hand and look
      the SAME every time it is drawn — a composition that reshuffles on
      reload is not a composition. So every jitter is a hash of the thing's
@@ -82,6 +114,16 @@
   }
 
   function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  function smooth(f) { return f * f * (3 - 2 * f); }
+
+  /* The largest rectangle of a given aspect that fits inside a box. The
+     focus on the wall and the opened stage want the same answer, so they
+     ask the same question. */
+  function contain(ratio, aw, ah) {
+    var w = aw, h = w / ratio;
+    if (h > ah) { h = ah; w = h * ratio; }
+    return { w: w, h: h };
+  }
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
   function gcd(a, b) { while (b) { var t = a % b; a = b; b = t; } return a; }
   function titleOf(id) { return (FILMS[id] && FILMS[id].title) || ''; }
@@ -303,7 +345,7 @@
          means a tall frame on the smallest tier comes out narrow, and below
          about 180px across a photograph stops reading as a photograph and
          starts reading as a thumbnail. */
-      var floorW = small ? 96 : 180;
+      var floorW = small ? 118 : 180;
       if (s.w < floorW) { var up = floorW / s.w; s.w *= up; s.h *= up; }
       it.w = Math.round(s.w);
       it.h = Math.round(s.h);
@@ -399,22 +441,17 @@
        along the line between two centres instead looks reasonable and is
        not — two frames overlapping by a hair vertically while sitting far
        apart horizontally get shoved mostly sideways, and a force scaled off
-       the horizontal penetration goes negative and drives them together. */
-    /* Nothing may hang off the wall either — the wall IS the archive, and an
-       edge you can see past stops feeling like one. Which means the clamp
-       has to live INSIDE the relaxation and not after it: clamping a settled
-       layout shoves every edge frame back into its neighbour, and the seven
-       overlaps that produces are exactly the ones the relaxation just spent
-       a hundred passes removing. Pushing apart and pulling in on the same
-       pass lets the two constraints settle against each other. */
-    function pen(it) {
-      it.x = clamp(it.x, -W / 2 + it.w / 2, W / 2 - it.w / 2);
-      /* A cut carries its slate under it and has to leave room for it. */
-      var below = it.kind === 'cut' ? Math.min(vw, vh) * 0.07 : 0;
-      it.y = clamp(it.y, -H / 2 + it.h / 2, H / 2 - it.h / 2 - below);
-    }
+       the horizontal penetration goes negative and drives them together.
 
-    for (pass = 0; pass < 260; pass++) {
+       The relaxation runs FREE. Holding the frames inside the wall while
+       they settle sounds tidier and does not work: a pair pinned against the
+       same edge has no room on the axis it needs, so the push happens, the
+       clamp puts it straight back, and the pass oscillates until it runs out
+       — which is how two frames end up overlapping at the right-hand edge no
+       matter how many passes you give it. The wall is fitted to the result
+       below instead, which is the same thing said in the order that can
+       actually be satisfied. */
+    for (pass = 0; pass < 200; pass++) {
       var moved = false;
       for (i = 0; i < n; i++) {
         for (var j = i + 1; j < n; j++) {
@@ -430,15 +467,33 @@
             var py = (dy < 0 ? -1 : 1) * oy * 0.5;
             A.y -= py; B.y += py;
           }
-          pen(A); pen(B);
           moved = true;
         }
       }
       if (!moved) break;
     }
 
+    /* --- and the wall is whatever they settled into ---
+       The lattice was scored against the wall, so what comes out of the
+       relaxation is already the right size and shape to within the jitter;
+       taking the extent as the wall rather than forcing the extent into the
+       wall costs a few per cent either way and buys a guarantee that nothing
+       overlaps. Re-centred so the origin stays the middle of the archive,
+       which is what every coordinate here is measured from. */
+    var ex0 = 1e9, ex1 = -1e9, ey0 = 1e9, ey1 = -1e9;
     order.forEach(function (it) {
-      pen(it);
+      /* A cut carries its slate under it and has to leave room for it. */
+      var below = it.kind === 'cut' ? Math.min(vw, vh) * 0.07 : 0;
+      ex0 = Math.min(ex0, it.x - it.w / 2); ex1 = Math.max(ex1, it.x + it.w / 2);
+      ey0 = Math.min(ey0, it.y - it.h / 2); ey1 = Math.max(ey1, it.y + it.h / 2 + below);
+    });
+    var midX = (ex0 + ex1) / 2, midY = (ey0 + ey1) / 2;
+    W = Math.round(ex1 - ex0);
+    H = Math.round(ey1 - ey0);
+
+    order.forEach(function (it) {
+      it.x -= midX;
+      it.y -= midY;
 
       it.el.style.width = it.w + 'px';
       it.el.style.height = it.h + 'px';
@@ -452,6 +507,23 @@
        there is nowhere to go on it at all. */
     limit.x = Math.max(0, (W - vw) / 2);
     limit.y = Math.max(0, (H - vh) / 2);
+
+    /* What each frame becomes when the camera settles on it. Scored here
+       rather than in the loop because every term in it — the viewport, the
+       tier, the crop, which cut variant this orientation gets — is decided
+       here and nowhere else. */
+    order.forEach(function (it) {
+      if (it.kind === 'cut') {
+        /* How much of the screen it holds now, on whichever axis is the
+           tight one — the same measure the target is written in, so the
+           scale between them is one division. */
+        var fill = Math.max(it.w / vw, it.h / vh);
+        it.fs = Math.max(1, Math.min(CUT_MOST, Math.max(CUT_FILL, fill + CUT_GROW)) / fill);
+      } else {
+        it.fs = 1 + SHOT_LIFT;
+      }
+      if (!it.f) it.f = 0;
+    });
 
     if (!arrived) {
       arrived = true;
@@ -605,7 +677,19 @@
 
   function step() {
     if (!drag) {
-      if (pointerLive && !viewerOpen) { vel.x += lean.x * 2.0; vel.y += lean.y * 2.0; }
+      /* The lean eases off as a cut takes hold. A cut answers the cursor by
+         growing to most of the screen AND sliding to the middle of it, so a
+         camera still drifting underneath is pulling the thing out from under
+         the very cursor that asked for it: the frame walks off the pointer,
+         the focus drops, it shrinks, the pointer is inside again, and it
+         grows — the flicker that reads as "sometimes it just doesn't". While
+         a cut is up the camera stands still and lets you look at it; the
+         moment you leave, the lean comes straight back. */
+      if (pointerLive && !viewerOpen) {
+        var hold = 1 - 0.92 * cutHold;
+        vel.x += lean.x * 2.0 * hold;
+        vel.y += lean.y * 2.0 * hold;
+      }
       if (keys.x || keys.y) { vel.x += keys.x * 3.4; vel.y += keys.y * 3.4; }
 
       vel.x = clamp(vel.x, -MAXV, MAXV) * 0.86;
@@ -636,23 +720,49 @@
      6. RENDER
 
      One transform for the whole wall, and one more only for the frames the
-     cursor is actually near. Everything off-screen is taken out of the paint.
+     cursor or the middle of the screen has hold of. Everything off-screen is
+     taken out of the paint.
      --------------------------------------------------------------- */
 
   var nearEl = document.querySelector('[data-near]');
   var ofEl = document.querySelector('[data-of-count]');
   var lastNear = null;
+  var focusHeld = null;
+  var cutHold = 0;
   var mapView = document.querySelector('[data-map-view]');
   if (ofEl) ofEl.textContent = '/ ' + pad2(items.length);
+
+  var dimOn = false;
 
   function render(force) {
     var ox = Math.round(-cam.x), oy = Math.round(-cam.y);
     field.style.transform = 'translate3d(' + ox + 'px,' + oy + 'px,0)';
 
     var best = null, bd = 1e12;
+    var focusIt = null, fd = 1e12;
+    var hoverIt = null, hoverArea = 1e12;
+    /* A mouse points. Where there is one, what grows is whatever it is
+       pointing AT — not whatever the camera happens to have drifted nearest
+       to, which is a different question with a different answer and is why a
+       cut would grow on one approach and refuse on the next. The camera
+       measure below still runs, and is what a phone uses: there is no cursor
+       there, so the middle of the screen has to stand in for one. */
+    var byHand = fine && cursor.on && !small && !viewerOpen && !reduced;
+    var R = Math.min(vw, vh) * FOCUS_R;
+    var SEEN = Math.min(vw, vh) * 0.9;
+    /* The focus keeps hold while a frame is open. The wall cannot move under
+       an open viewer, so nothing behind it changes — and letting it go would
+       mean the close animation shrinks the frame to a size it was not at
+       when it was opened, then grows it again. */
+    var live = !reduced;
+    var it, i;
 
-    for (var i = 0; i < order.length; i++) {
-      var it = order[i];
+    /* --- what is where, and what the middle of the screen has hold of ---
+       Measured for everything before anything is written, because the focus
+       is a competition: the wall grows ONE thing at a time, and which one
+       cannot be known until every frame has been asked how far it is. */
+    for (i = 0; i < order.length; i++) {
+      it = order[i];
       var px = it.x + vw / 2 + ox;
       var py = it.y + vh / 2 + oy;
 
@@ -662,11 +772,64 @@
         it.on = on;
         it.el.style.visibility = on ? '' : 'hidden';
       }
+      it.px = px; it.py = py;
       if (!on) continue;
 
       var dcx = px - vw / 2, dcy = py - vh / 2;
-      var dc = dcx * dcx + dcy * dcy;
+      var dc = Math.sqrt(dcx * dcx + dcy * dcy);
       if (dc < bd) { bd = dc; best = it; }
+
+      /* How far the camera is from the closest it can ever be brought to
+         this frame. Distance from the middle of the SCREEN is the obvious
+         measure and it is the wrong one: the wall is two screens tall and
+         the camera travels one, so everything in the outer band — which is
+         where both cuts happen to be — can never be put in the middle of
+         the screen at all, and a focus scored that way would never fire for
+         them. What is asked here is not "is this in the middle" but "is
+         this as near the middle as this visitor can put it", which is the
+         same question `stepViewer` asks when it goes to a frame. */
+      var rx = cam.x - clamp(it.x, -limit.x, limit.x);
+      var ry = cam.y - clamp(it.y, -limit.y, limit.y);
+      var fdist = Math.sqrt(rx * rx + ry * ry);
+      it.fd = fdist;
+
+      /* A cut counts as nearer than it is. Otherwise a photograph sitting a
+         few pixels closer takes the focus off the one thing on this stretch
+         of wall that moves. The screen test is a second gate: two frames at
+         opposite ends of the unreachable band answer the camera identically,
+         and only the one actually near the middle should be grown. */
+      var bid = fdist * (it.kind === 'cut' ? CUT_BIAS : 1);
+      if (fdist < R && dc < SEEN && bid < fd) { fd = bid; focusIt = it; }
+
+      /* Hit-tested against where the frame was actually DRAWN last time,
+         not where it was laid out. A cut that has grown is half as big
+         again as its slot, and testing the slot means the cursor falls out
+         of the frame it is plainly still inside the moment the thing
+         reacts — grow, drop, grow, drop. Testing the drawn rectangle makes
+         the growth its own hysteresis: bigger is easier to stay inside. */
+      if (byHand) {
+        var hw = (it.rw || it.w) / 2, hh = (it.rh || it.h) / 2;
+        var hx = it.rx === undefined ? px : it.rx;
+        var hy = it.ry === undefined ? py : it.ry;
+        var over = Math.abs(cursor.x - hx) <= hw && Math.abs(cursor.y - hy) <= hh;
+        /* The frame it is already holding keeps hold over its SLOT too, not
+           only over where it has slid to. A cut travels most of a screen on
+           its way to the middle, and testing only the drawn rectangle means
+           the cursor can be left behind by the very movement it caused. The
+           union of the two is the honest question: has the pointer left this
+           frame, or has this frame left the pointer. */
+        if (!over && it === focusHeld) {
+          over = Math.abs(cursor.x - px) <= it.w / 2 &&
+                 Math.abs(cursor.y - py) <= it.h / 2;
+        }
+        if (over) {
+          /* Under two overlapping frames, the smaller one is the one being
+             pointed at; a grown neighbour lying over it is not. */
+          var area = hw * hh;
+          if (it === focusHeld) area = -1;      /* keep hold once held */
+          if (area < hoverArea) { hoverArea = area; hoverIt = it; }
+        }
+      }
 
       /* Revealed by the camera, once. A frame is held slightly small until
          the visitor's own movement brings it properly inside the viewport,
@@ -679,21 +842,81 @@
         it.shown = true;
         it.el.classList.add('is-shown');
       }
+    }
+
+    if (byHand) focusIt = hoverIt;
+    focusHeld = focusIt;
+    /* How far the cut that has hold has actually got. Read by the camera on
+       the next tick — not a boolean, so the lean returns as smoothly as the
+       cut lets go. */
+    cutHold = (focusIt && focusIt.kind === 'cut') ? focusIt.f : 0;
+
+    /* --- and what that does to each of them ---------------------------- */
+    var dim = false;
+
+    for (i = 0; i < order.length; i++) {
+      it = order[i];
+      if (!it.on) {
+        /* A frame carried off the screen mid-grow is put back flat rather
+           than left holding a scale nobody can see — and put back on the
+           element, not only in the bookkeeping, or it comes back promoted,
+           lit, and standing over its neighbours. */
+        if (it.f || it.foc) {
+          it.f = 0; it.foc = false; it.key = it.z = null;
+          it.rx = it.ry = it.rw = it.rh = undefined;
+          it.el.classList.remove('is-focus', 'is-near');
+          it.el.style.zIndex = '';
+          it.el.style.transform = '';
+        }
+        continue;
+      }
+
+      /* The camera's answer eases rather than switches, so the moment the
+         focus changes hands one frame lets go while the next takes hold. */
+      var want = (live && it === focusIt)
+        ? (byHand ? 1 : smooth(1 - it.fd / R))
+        : 0;
+      it.f += (want - it.f) * FOCUS_EASE;
+      if (it.f < 0.002) it.f = 0;
+
+      var lx = 0, ly = 0, sc = 1;
 
       /* The cursor is felt, not clicked. Held well under a tenth so it reads
          as the wall answering a hand and never as a control lighting up. */
-      var lx = 0, ly = 0, sc = 1;
       if (cursor.on && !small && !viewerOpen && !reduced) {
-        var dx = cursor.x - px, dy = cursor.y - py;
+        var dx = cursor.x - it.px, dy = cursor.y - it.py;
         var d = Math.sqrt(dx * dx + dy * dy);
         if (d < GRAB) {
-          var f = 1 - d / GRAB;
-          f = f * f * (3 - 2 * f);          /* smoothstep */
+          var f = smooth(1 - d / GRAB);
           sc = 1 + LIFT * f;
           lx = (dx / (d || 1)) * PULL * f;
           ly = (dy / (d || 1)) * PULL * f;
         }
       }
+
+      if (it.f) {
+        sc *= 1 + (it.fs - 1) * it.f;
+        /* A cut also slides toward the middle as it grows, so what it grows
+           into is the screen rather than half of it and half the bezel. A
+           photograph is never pulled: forty frames leaning at the middle is
+           a wall that shuffles itself. */
+        if (it.kind === 'cut') {
+          lx -= (it.px - vw / 2) * CUT_PULL * it.f;
+          ly -= (it.py - vh / 2) * CUT_PULL * it.f;
+        }
+      }
+
+      var foc = it.f > 0.5;
+      if (foc !== it.foc) {
+        it.foc = foc;
+        it.el.classList.toggle('is-focus', foc);
+      }
+      if (foc && it.kind === 'cut') dim = true;
+
+      /* Over its neighbours while it is over them, and back into the flat
+         wall the moment it is not. Still under the HUD, which owns 40 up. */
+      var z = it.f > 0.02 ? String(20 + (it.f * 10 | 0)) : '';
+      if (z !== it.z) { it.z = z; it.el.style.zIndex = z; }
 
       /* Written only on a real change, and rounded, so a camera at rest
          stops producing style writes altogether. */
@@ -704,18 +927,47 @@
           : 'translate3d(' + lx.toFixed(1) + 'px,' + ly.toFixed(1) + 'px,0) scale(' + sc.toFixed(4) + ')';
         it.el.classList.toggle('is-near', sc > 1.004);
       }
+
+      it.rx = it.px + lx; it.ry = it.py + ly;
+      it.rw = it.w * sc; it.rh = it.h * sc;
+    }
+
+    /* One cut at eighty percent of the screen against a full wall is a
+       collage. The rest of the wall stands back while it is up. */
+    if (dim !== dimOn) {
+      dimOn = dim;
+      room.classList.toggle('is-focusing', dim);
     }
 
     /* The corner names whatever is nearest the middle of the screen — the
-       only place a production is named without the cursor asking. */
-    if (best && best !== lastNear) {
-      lastNear = best;
-      if (nearEl) nearEl.textContent = best.title;
+       only place a production is named without the cursor asking. A frame
+       the camera has taken hold of takes the name with it: once a cut is
+       most of the screen, naming anything else is simply wrong, and it is
+       measured from where a frame was laid out rather than from where the
+       focus has since slid it. */
+    var name = (focusIt && focusIt.f > 0.35) ? focusIt : best;
+    if (name && name !== lastNear) {
+      lastNear = name;
+      if (nearEl) nearEl.textContent = name.title;
     }
 
+    /* The box is the viewport drawn on the wall, and the wall's origin is
+       its MIDDLE — so the box's middle is the map's middle plus the camera,
+       and its top-left is that less half its own size. Translating the raw
+       camera from a corner-anchored box instead puts it in the corner at
+       cam 0 and hangs it off the edge at the far end, which is exactly as
+       far wrong as the camera can travel. */
     if (mapView && mapW) {
-      mapView.style.transform = 'translate3d(' +
-        ((cam.x / W) * mapW).toFixed(1) + 'px,' + ((cam.y / H) * mapH).toFixed(1) + 'px,0)';
+      var bw = parseFloat(mapView.style.width) || 0;
+      var bh = parseFloat(mapView.style.height) || 0;
+      /* Held inside the frame even while the camera is stretched past the
+         end of the wall. The give is a real thing and the wall should feel
+         it, but the map is a diagram of a finite rectangle: a viewport box
+         hanging out of its own border says the archive continues past the
+         edge, which is the one thing this element exists to deny. */
+      var bx = clamp(mapW / 2 + (cam.x / W) * mapW - bw / 2, 0, Math.max(0, mapW - bw));
+      var by = clamp(mapH / 2 + (cam.y / H) * mapH - bh / 2, 0, Math.max(0, mapH - bh));
+      mapView.style.transform = 'translate3d(' + bx.toFixed(1) + 'px,' + by.toFixed(1) + 'px,0)';
     }
   }
 
@@ -874,20 +1126,26 @@
   var viewerOpen = false;
   var current = null;
 
+  /* Where the frame IS, not where it was laid out. A frame the camera has
+     hold of is scaled and, if it is a cut, slid toward the middle — and a
+     zoom that starts from the small rect snaps down before it grows. Closing
+     asks again, so it picks the same correction up on the way back. */
   function screenRect(it) {
-    return {
-      x: it.x + vw / 2 - cam.x - it.w / 2,
-      y: it.y + vh / 2 - cam.y - it.h / 2,
-      w: it.w, h: it.h
-    };
+    var s = 1 + ((it.fs || 1) - 1) * (it.f || 0);
+    var cx = it.x + vw / 2 - cam.x;
+    var cy = it.y + vh / 2 - cam.y;
+    if (it.kind === 'cut' && it.f) {
+      cx -= (cx - vw / 2) * CUT_PULL * it.f;
+      cy -= (cy - vh / 2) * CUT_PULL * it.f;
+    }
+    var w = it.w * s, h = it.h * s;
+    return { x: cx - w / 2, y: cy - h / 2, w: w, h: h };
   }
 
   function stageRect(ratio) {
     var m = Math.min(vw, vh) * (small ? 0.06 : 0.09);
-    var aw = vw - m * 2, ah = vh - m * 2;
-    var w = aw, h = w / ratio;
-    if (h > ah) { h = ah; w = h * ratio; }
-    return { w: w, h: h, x: (vw - w) / 2, y: (vh - h) / 2 };
+    var b = contain(ratio, vw - m * 2, vh - m * 2);
+    return { w: b.w, h: b.h, x: (vw - b.w) / 2, y: (vh - b.h) / 2 };
   }
 
   function fill(it) {
@@ -895,13 +1153,26 @@
     if (it.kind === 'cut') {
       var v = document.createElement('video');
       v.src = it.src;
-      v.controls = true;
       v.loop = true;
+      v.muted = true;
+      v.autoplay = true;
       v.playsInline = true;
       v.setAttribute('playsinline', '');
+      v.setAttribute('muted', '');
       v.poster = it.video ? it.video.poster : '';
       if (it.video) v.currentTime = it.video.currentTime || 0;
       stage.appendChild(v);
+      /* A silent, video-only element gets paused by the browser to save power
+         if it starts while the stage is still behind the opening animation.
+         So ask again when the file is ready and once the stage has landed. */
+      var start = function () {
+        if (!viewerOpen || v.parentNode !== stage) return;
+        var pr = v.play();
+        if (pr && pr.catch) pr.catch(function () {});
+      };
+      v.addEventListener('canplay', start);
+      setTimeout(start, 700);
+      start();
     } else {
       var img = document.createElement('img');
       img.alt = '';

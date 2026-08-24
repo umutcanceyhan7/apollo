@@ -13,6 +13,12 @@
 # committed — 35 MB of derivatives is what the site needs and all it needs.
 # Keep your own copy of _src; it is the source the derivatives are rebuilt from.
 /assets/backstage/_src/
+# And any archive of it. A 132 MB zip of the masters was committed once and
+# had to be reset out again: GitHub rejects any single file over 100 MB, so a
+# push carrying one fails outright and the fix is a history rewrite rather
+# than a delete. The masters are yours to keep locally; the derivatives in
+# assets/backstage/web/ are what the site needs and all it needs.
+/assets/backstage/_src*.zip
 
 .DS_Store
 node_modules/

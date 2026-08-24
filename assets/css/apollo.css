@@ -78,6 +78,11 @@
      list works everywhere the site already works; color-mix() does not. */
   --ground-rgb: 6, 6, 3;
   --ink-rgb: 236, 228, 180;
+  /* The alternate ink is always the same light as the ground — `--ink-alt`
+     and `--ground` resolve to one colour in both modes — so the channel copy
+     is an alias rather than a fourth pair of numbers. It follows the mode on
+     its own, because light re-cuts `--ground-rgb` above it. */
+  --ink-alt-rgb: var(--ground-rgb);
 
   /* --- the opacity ladder ----------------------------------------------
      Rank is opacity, never colour, so the ladder is the system's entire
@@ -356,12 +361,6 @@ p { margin: 0; max-width: 58ch; }
 .band--cream { background: var(--ground-alt); color: var(--ink-alt); }
 .band--tight { padding-top: calc(var(--band) * 0.42); }
 
-/* A dark band that runs straight into the footer pays for the closing gap
-   once. Everywhere else the band above the footer is cream, so that gap is
-   half cream and half black and reads as the last cut; on one black run it
-   is a single hole under the last line, and the page has to taper to its
-   end rather than fall out of one. */
-.band--close { padding-bottom: calc(var(--band) * 0.3); }
 .band--flush { padding-left: 0; padding-right: 0; }
 
 .stack { display: flex; flex-direction: column; gap: 24px; }
@@ -416,10 +415,10 @@ p { margin: 0; max-width: 58ch; }
      the whole page, so a bar even 5px taller than its token puts a scrollbar
      on a screen that is meant to have none. */
   width: 103px;
-  height: 44px;
+  height: 90px;
   background: currentColor;
-  -webkit-mask: url(../Apollo+Beyaz+Logo.webp) no-repeat left center;
-  mask: url(../Apollo+Beyaz+Logo.webp) no-repeat left center;
+  -webkit-mask: url(../logoApollo.png) no-repeat left center;
+  mask: url(../logoApollo.png) no-repeat left center;
   -webkit-mask-size: contain;
   mask-size: contain;
 }
@@ -1161,47 +1160,226 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
 
 .prose { display: flex; flex-direction: column; gap: 24px; max-width: 58ch; }
 
-/* --- the centred block: about only ---------------------------------------
-   `about` opens on `.wall__inner`, the one centred column on the site, and
-   with the display line gone the blocks under it read as a continuation of
-   that axis rather than a return to the left edge. So the exception is the
-   page, not the component: nowhere else centres, and nothing here leaks out
-   of `.midblock`. The measure comes in to 52ch because a centred line is
-   read from a moving left edge and a long one loses it. */
-
-.midblock {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  text-align: center;
-}
-
-/* One gap for everything is what makes a centred stack float, so the label
-   and the prose it introduces stay tighter than the gap around them. The
-   fact grid takes no extra break of its own — `.factgrid` sets `margin: 0`
-   and nothing overrides it. */
-.midblock .prose { max-width: 52ch; gap: 20px; text-wrap: pretty; margin-top: 12px; }
-
-/* Four facts, and the row count is the viewport's decision rather than a
-   breakpoint's: two up at the block's full measure, one up once a column
-   can no longer hold a value on one line. */
+/* --- about: the closing colophon -----------------------------------------
+   Four facts as a printed colophon rather than four floating pairs. The
+   hairline over each is the system's only divider, and it is the thing that
+   turns a list into a row of columns. The column count stays the viewport's
+   decision rather than a breakpoint's: four up, then two, then one, once a
+   value can no longer hold its line. */
 .factgrid {
   list-style: none;
   margin: 0;
   padding: 0;
   width: 100%;
-  max-width: 640px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
-  gap: 36px 48px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 28px 48px;
 }
 
 .factgrid li {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: var(--gap);
+  border-top: var(--hair);
+  padding-top: 14px;
+}
+
+/* --- about: the studio spread --------------------------------------------
+   One band carrying both halves of what this page has to say. The sheet of
+   three photographs holds the left, the prose runs down the right, and the
+   air between them is the air that used to sit empty beside each of them
+   on two separate bands.
+
+   The band is the page's own black. The cream ground this block used to
+   stand on covered 1470px of a 2677px page, which made the interface the
+   largest colour on a site whose first principle is that the footage is the
+   only chroma there is. The single cream that remains is the call at the
+   foot of the page. */
+
+.band--spread { padding-bottom: calc(var(--band) * 0.72); }
+
+.spread {
+  display: grid;
+  /* The sheet keeps a measure and the prose takes the rest. Run edge to
+     edge the establishing frame alone stands taller than a laptop viewport,
+     and a picture you cannot see the whole of has stopped being a
+     photograph and become a background. */
+  grid-template-columns: minmax(0, 1.62fr) minmax(0, 1fr);
+  gap: clamp(36px, 5.5vw, 88px);
+  align-items: start;
+}
+
+/* --- the sheet ----------------------------------------------------------
+   A sheet of three, not a portrait. One wide frame establishes the room he
+   works in and leads, because it is the only picture here with a crew in
+   it; the two portraits sit under it at different sizes, and the name takes
+   the air the smaller of them leaves above itself. Nothing is the same size
+   as anything else, which is what separates a contact sheet from a gallery
+   of equals. */
+.sheet {
+  margin: 0;
+  display: grid;
+  align-items: end;
+  gap: clamp(20px, 2.6vw, 40px);
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.85fr);
+  grid-template-areas:
+    "wide wide"
+    "lead caption"
+    "lead aside";
+}
+
+/* The crop, not the image, is what holds the size. The tint behind it is
+   the ink at its faintest, so a slow decode shows as an empty frame rather
+   than as a hole. */
+.sheet__frame {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: rgba(var(--ink-rgb), 0.06);
+}
+
+/* The establishing frame, at the full measure. Cut to 3:2 rather than left
+   at the file's 4:3, which is the one place a crop earns itself here: at
+   this width 4:3 stands taller than the viewport, and the frame is the only
+   landscape on the page, so the wider box is also the more cinematic one.
+   The crop is biased upward — the megaphone sits on the picture's top edge
+   and a centred 3:2 box takes the horn off it, while the bottom of the
+   frame is cushion and reflector. */
+.sheet__frame--wide {
+  grid-area: wide;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+}
+.sheet__frame--wide .sheet__img { object-position: 50% 28%; }
+
+.sheet__frame--lead { grid-area: lead; width: 100%; }
+
+/* Narrower and shorter than the frame beside it, and set on that frame's
+   bottom line, so the air in the last row collects above it — which is
+   where the name goes. */
+.sheet__frame--aside {
+  grid-area: aside;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  align-self: end;
+}
+
+/* The name sits in the second column on the small frame's own left edge,
+   held down to the air directly over it rather than floating in the middle
+   of a column. */
+.sheet__caption {
+  grid-area: caption;
+  align-self: end;
+  padding-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 34ch;
+}
+
+/* The one motion here, and it belongs to the link rather than to the
+   picture: the image grows inside a frame that does not, so the crop
+   tightens and nothing on the page moves. `:has()` is what ties the two —
+   where it isn't supported the frame simply holds still, which is the same
+   thing the reduced-motion rule asks for. */
+.sheet__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1);
+  transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.sheet:has(.sheet__tie:hover) .sheet__img,
+.sheet:has(.sheet__tie:focus-visible) .sheet__img { transform: scale(1.04); }
+
+/* Opacity groups: an alpha on the line would cap the word inside it, so the
+   two are separated in colour instead — the role reads at the dim rung, the
+   word it contains at full ink. Both are built from `--ink-rgb`, which each
+   mode re-cuts, so neither names a colour. */
+.sheet__role { color: rgba(var(--ink-rgb), var(--o-dim)); }
+.sheet__tie  { color: rgb(var(--ink-rgb)); }
+
+.sheet__word {
+  border-bottom: var(--hair);
+  padding-bottom: 2px;
+}
+
+/* --- the prose beside it -------------------------------------------------
+   Pinned, because the prose is roughly a third of the sheet's height and a
+   column that simply started beside it would strand two thirds of its own
+   track — the same hole this page began with, moved one column right. Held
+   at the masthead's line it reads the whole way down the pictures instead.
+   `.columns--sticky` already does this for the film page's credits, so the
+   device is the system's rather than this block's. */
+.spread__aside {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 2vw, 30px);
+  position: sticky;
+  top: calc(var(--header-h) + clamp(24px, 4vw, 56px));
+}
+
+/* The prose steps up from body 16px, which was the size that lost this page
+   to its own photographs: a paragraph set at the smallest thing on the
+   screen beside a 547px print is not going to be read first. It stops well
+   under the name — 25px against 46px — because the name is still the
+   subject of the spread and the paragraph is what is said about it.
+
+   Tracking stays at zero. Negative tracking is a display treatment; carried
+   into a reading size it closes the counters and costs the one thing the
+   size was raised to buy. */
+.spread__prose {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 1.6vw, 24px);
+  text-wrap: pretty;
+}
+
+.spread__prose p {
+  font-size: clamp(18px, 1.72vw, 25px);
+  line-height: 1.42;
+  letter-spacing: 0;
+  /* The column is already the measure. A second cap in `ch` would fight it
+     and leave a ragged gutter inside a track that is doing the job. */
+  max-width: none;
+}
+
+/* --- one column ----------------------------------------------------------
+   Below the spread's width the prose goes over the pictures rather than
+   beside them: it is the thing being said, and at one column the thing
+   being said comes first. The sheet keeps its own composition underneath,
+   which is the layout this page has always had on a phone. */
+@media (max-width: 1000px) {
+  .spread {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(40px, 7vw, 64px);
+  }
+
+  /* Nothing to pin against at one column — the column is the page. */
+  .spread__aside {
+    position: static;
+    top: auto;
+    order: -1;
+  }
+
+  .spread__prose p { max-width: 46ch; }
+}
+
+/* The sheet's own break, kept where it was: the frames go to the gutter box
+   and the caption drops under them, still on the left edge. */
+@media (max-width: 780px) {
+  .sheet {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "wide" "lead" "caption" "aside";
+    gap: 20px;
+  }
+  /* The small frame stays the small frame. At one column the only thing
+     left to say that with is width. */
+  .sheet__frame--aside { width: min(100%, 62%); }
+  /* The name stays over the small frame at one column, so the order holds
+     and the bottom alignment has nothing left to do. */
+  .sheet__caption { align-self: start; padding: 6px 0 0; }
 }
 
 /* --- links & the one button pattern -------------------------------- */
@@ -1454,7 +1632,7 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
   :root { --header-h: 70px; }
 
   /* Same arithmetic one size down: 70 minus 2x18 of bar padding is 34. */
-  .masthead__brand { width: 80px; height: 34px; }
+  .masthead__brand { width: 80px; height: 80px; }
 
   .masthead__nav {
     display: none;
@@ -1514,6 +1692,11 @@ li.is-active .row__cue { height: 11px; margin-top: 13px; opacity: 0.8; }
      the looping motion is switched off outright instead. */
   .row__dot { animation: none !important; }
   .wall__drift, .wall__scroll::after { animation: none !important; }
+
+  /* A crop that tightens over 0.7s becomes a jump cut at 0.01ms, so the
+     frame simply holds still. */
+  .sheet:has(.sheet__tie:hover) .sheet__img,
+  .sheet:has(.sheet__tie:focus-visible) .sheet__img { transform: none; }
 
   /* Entrances have no start state to animate from, so they simply are. */
   .js [data-reveal]:not([data-split]) { opacity: 1; transform: none; }
